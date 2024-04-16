@@ -6,5 +6,8 @@ import { Component } from '@angular/core';
   styleUrls: ['./header.component.scss']
 })
 export class HeaderComponent {
-
+  
+  reloadPage(): void {
+    window.location.reload();
+  }
 }

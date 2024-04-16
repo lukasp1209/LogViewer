@@ -1,6 +1,7 @@
 // body.component.ts
 import { Component, EventEmitter, Output, ElementRef, ViewChild } from '@angular/core';
 import * as JSZip from 'jszip';
+import { IgxTextHighlightDirective } from 'igniteui-angular';
 
 
 @Component({
@@ -12,7 +13,10 @@ import * as JSZip from 'jszip';
 export class BodyComponent {
   @Output() txtFilesLoaded = new EventEmitter<File[]>();
   @ViewChild('markedContentElement') markedContentElement: ElementRef | undefined;
+  @ViewChild(IgxTextHighlightDirective, { read: IgxTextHighlightDirective, static: true })
   @Output() searchEvent = new EventEmitter<string>();
+
+  public highlight!: IgxTextHighlightDirective;
 
   zipFile: File | null = null;
   zipContents: Array<File> = [];
@@ -24,22 +28,49 @@ export class BodyComponent {
   customWord: string = '';
   searchQuery: string = '';
   selectedDeleteOptions: string[] = [];
-  
-  // deleteOptions: { label: string; value: string }[] = [
-  //   { label: '"items"', value: 'items' },
-  //   { label: '"Database"', value: 'Database' },
-  //   { label: '"CheckError"', value: 'CheckError' },
-  //   { label: '"CheckErrorExist"', value: 'CheckErrorExist' },
-  //   { label: '"SCardEstablishContext"', value: 'SCardEstablishContext' },
-  //   { label: '"NIDA ID in Finish Refresh"', value: 'NIDA ID in Finish Refresh' },
-  //   { label: '"FieldMapper.ReadXML"', value: 'FieldMapper.ReadXML' },
-  // ]; 
-  logs: any;
+  //checkbox Filters
+  selectedFilters: string[] = [];
+  checkboxOptions: { label: string; value: string; checked: boolean }[] = [
+    { label: 'Einsatzabschluss', value: 'Finish', checked: false },
+    { label: 'Wlanmanager', value: 'Wlan', checked: false },
+    { label: 'Einsatzerstellung', value: 'Mission', checked: false },
+    { label: 'Spam', value: 'Spam', checked: false }
+  ];
 
+  buttonStates = {
+    Finish: false,
+    Wlan: false,
+    Mission: false,
+    Spam: false
+  };
+
+  //Spam Filters
+  private spamFilters: string[] = [
+    'Database',
+    'Achtung',
+    'CheckError',
+    'CheckErrorExist',
+    'SCardEstablishContext',
+    'NIDA ID in Finish Refresh',
+    'FieldMapper.ReadXML',
+    'GetStatusChange',
+    'MessageStateMachine'
+  ];
+  //Wlan Filters
+  private wlanFilters: string[] = [
+    'WlanManager',
+    'WlanStatus'
+  ];
+  logs: any;
+  html: any;
+  
   onFileChange(event: any): void {
     const fileList: FileList = event.target.files;
     if (fileList.length > 0) {
+       this.onFilterReset();
       this.zipFile = fileList[0];
+      console.log('Voller Pfad: ', this.zipFile.webkitRelativePath);
+      document.title = `${this.zipFile.name}`;
       this.zipContents = [];
       const zip = new JSZip();
       zip.loadAsync(this.zipFile).then((zipData) => {
@@ -62,22 +93,26 @@ export class BodyComponent {
     }
   }
 
-  onSearch() {
-    this.searchEvent.emit(this.searchQuery);
-  }
-
   selectFile(file: File): void {
     this.selectedFileName = file.name;
   }
 
-  markedContent(fileName: string): string {
-    let content = this.fileContentMap[fileName] || '';
+  
 
-    if (this.hiddenLines) {
-      content = content.split('\n').map(line => line.includes('WlanManager') ? '' : line).join('\n');
-    }
-    return content;
+  // show Content
+  // app-body.component.ts
+
+markedContent(fileName: string): string {
+  let content = this.fileContentMap[fileName] || '';
+
+  if (this.selectedFileName && this.fileContentMap[this.selectedFileName] && this.buttonStates.Mission) {
+    this.fileContentMap[this.selectedFileName] = this.fileContentMap[this.selectedFileName].replace(
+      /\b([Info])\b/gi,
+      (match) => `<mark>${match}</mark>`
+    );
   }
+  return content;
+}
 
   filterLinesByOptions(lines: string[], options: string[]): string[] {
     return lines.filter(line => options.every(option => !new RegExp(`\\b.*${option}.*\\b`, 'gi').test(line)));
@@ -93,64 +128,83 @@ export class BodyComponent {
 
   // Mission close
   markCmd(): void {
-    if (this.selectedFileName && this.fileContentMap[this.selectedFileName]) {
+    if (this.selectedFileName && this.fileContentMap[this.selectedFileName] && this.buttonStates.Finish) {
       this.fileContentMap[this.selectedFileName] = this.fileContentMap[this.selectedFileName].replace(
         /\b(cmd=remove)\b/gi,
         (match) => `<mark>${match}</mark>`
       );
     }
   }
+  onFinishCheckboxChange(): void {
+    if (this.buttonStates.Finish) {
+      this.markCmd();
+    }
+  }
 
   //Wlan-Button
   deleteWlanLog(): void {
-    if (this.selectedFileName && this.fileContentMap[this.selectedFileName]) {
-      if (!this.originalFileContentMap[this.selectedFileName]) {
-        this.originalFileContentMap[this.selectedFileName] = this.fileContentMap[this.selectedFileName];
-      }
-  
-      this.fileContentMap[this.selectedFileName] = this.fileContentMap[this.selectedFileName]
-        .split('\n')
-        .filter(line => !/\b.*WlanManager.*\b/gi.test(line))
-        .filter(line => !/\b.*WlanStatus.*\b/gi.test(line))
-        .join('\n');
+    if (this.selectedFileName && this.fileContentMap[this.selectedFileName] && this.buttonStates.Wlan) {
+      this.fileContentMap[this.selectedFileName] = this.applyFilters(
+        this.fileContentMap[this.selectedFileName],
+        this.wlanFilters
+      );
+    }
+  }
+  onWlanCheckboxChange(): void {
+    if (this.buttonStates.Wlan) {
+      this.deleteWlanLog();
     }
   }
 
   // Reset Original Content
+  onFilterReset(): void {
+    this.showOriginalContent();
+  }
+
   showOriginalContent(): void {
     if (this.selectedFileName && this.originalFileContentMap[this.selectedFileName]) {
       this.fileContentMap[this.selectedFileName] = this.originalFileContentMap[this.selectedFileName];
     }
   }
+
   // delete Spam and unnecessary Content
   deleteSpam(): void {
-    if (this.selectedFileName && this.fileContentMap[this.selectedFileName]) {
-      this.fileContentMap[this.selectedFileName] = this.fileContentMap[this.selectedFileName]
-      
-        .split('\n')
-        .filter(line => !/\b.*Database.*\b/gi.test(line))
-        .filter(line => !/\b.*Achtung.*\b/gi.test(line))
-        .filter(line => !/\b.*CheckError.*\b/gi.test(line))
-        .filter(line => !/\b.*CheckErrorExist.*\b/gi.test(line))
-        .filter(line => !/\b.*SCardEstablishContext.*\b/gi.test(line))
-        .filter(line => !/\b.*NIDA ID in Finish Refresh.*\b/gi.test(line))
-        .filter(line => !/\b.*FieldMapper.ReadXML.*\b/gi.test(line))
-        .filter(line => !/\b.*GetStatusChange.*\b/gi.test(line))
-        .filter(line => !/\b.*MessageStateMachine.*\b/gi.test(line))
-        .join('\n');
+    if (this.selectedFileName && this.fileContentMap[this.selectedFileName] && this.buttonStates.Spam) {
+      this.fileContentMap[this.selectedFileName] = this.applyFilters(
+        this.fileContentMap[this.selectedFileName],
+        this.spamFilters
+      );
     }
   }
 
+  onSpamCheckboxChange(): void {
+    if (this.buttonStates.Spam) {
+      this.deleteSpam();
+    }
+  }
+
+  private applyFilters(content: string, filters: string[]): string {
+    return content
+      .split('\n')
+      .filter(line => filters.every(filter => !new RegExp(`\\b.*${filter}.*\\b`, 'gi').test(line)))
+      .join('\n');
+  }
   // create Mission
   createMission(): void {
-    if (this.selectedFileName && this.fileContentMap[this.selectedFileName]) {
+    if (this.selectedFileName && this.fileContentMap[this.selectedFileName] && this.buttonStates.Mission) {
       this.fileContentMap[this.selectedFileName] = this.fileContentMap[this.selectedFileName].replace(
         /\b(Generating NIDA ID)\b/gi,
         (match) => `<mark>${match}</mark>`
       );
     }
   }
+  onMissionCheckboxChange(): void {
+    if (this.buttonStates.Mission) {
+      this.createMission();
+    }
+  }
 
+  // custom Filters
   removeCustomLines(): void {
     if (this.selectedFileName && this.fileContentMap[this.selectedFileName] && this.customWord) {
       this.fileContentMap[this.selectedFileName] = this.fileContentMap[this.selectedFileName]
@@ -160,21 +214,8 @@ export class BodyComponent {
     }
   }
 
-  applyFilterByOption(option: string): void {
-    if (this.selectedFileName && this.fileContentMap[this.selectedFileName]) {
-      const filterRegex = new RegExp(`\\b.*${option}.*\\b`, 'gi');
-      this.fileContentMap[this.selectedFileName] = this.fileContentMap[this.selectedFileName]
-        .split('\n')
-        .filter(line => !filterRegex.test(line))
-        .join('\n');
-    }
-  }
-  
-  applyFilters(): void {
-    this.selectedDeleteOptions.forEach(option => {
-      this.applyFilterByOption(option);
-    });
-  }
+  // mark Log-level
+
+  // Filter
 }
-
-
+  

@@ -1,43 +1,19 @@
 
-// Custom Theming for Angular Material
-// For more information: https://material.angular.io/guide/theming
-@use '@angular/material' as mat;
-// Plus imports for other components in your app.
+// @use "igniteui-angular/theming" as *;
+// // Uncomment the following lines if you want to add a custom palette:
+// // $primary: #731963 !default;
+// // $secondary: #ce5712 !default;
+// // $app-palette: palette($primary, $secondary, $surface);
 
-// Include the common styles for Angular Material. We include this here so that you only
-// have to load a single css file for Angular Material in your app.
-// Be sure that you only ever include this mixin once!
-@include mat.core();
+// /* autoprefixer grid: on */
 
-// Define the palettes for your theme using the Material Design palettes available in palette.scss
-// (imported above). For each palette, you can optionally specify a default, lighter, and darker
-// hue. Available color palettes: https://material.io/design/color/
-$webViewer-primary: mat.define-palette(mat.$indigo-palette);
-$webViewer-accent: mat.define-palette(mat.$pink-palette, A200, A100, A400);
-
-// The warn palette is optional (defaults to red).
-$webViewer-warn: mat.define-palette(mat.$red-palette);
-
-// Create the theme object. A theme consists of configurations for individual
-// theming systems such as "color" or "typography".
-$webViewer-theme: mat.define-light-theme((
-  color: (
-    primary: $webViewer-primary,
-    accent: $webViewer-accent,
-    warn: $webViewer-warn,
-  )
-));
-
-// Include theme styles for core and each component used in your app.
-// Alternatively, you can import and @include the theme mixins for each component
-// that you are using.
-@include mat.all-component-themes($webViewer-theme);
-
-/* You can add global styles to this file, and also import other style files */
-
+// @include core();
+// @include typography($font-family: $material-typeface, $type-scale: $material-type-scale);
+// @include theme($default-palette);
+// // CSS Reset, comment out if not required or using a different module
+// @import 'minireset.css/minireset';
 body {
-    margin: 0;
     background-color: white;
 }
 html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+body { font-family:'Times New Roman', Times, serif }

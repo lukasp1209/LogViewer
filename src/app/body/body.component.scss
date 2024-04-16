@@ -1,83 +1,26 @@
-.Einsatzabschluss {
-    background-color: gray;
-    height: 30px;
-    width: 160px;
-    margin-top: 10px;
-    margin-left: 10px;
-    border-radius: 4px;
-    text-align: center;
-    color: white;
+.content {
+
+&[has-content='true'] {
+    margin-right: 5px;
+    margin-left: 5px;
+    border:1px solid black;
+    border-radius: 3px;
+    white-space: pre-wrap;
+}
 }
 
-.Wlanmanager {
+.btn-secondary {
     background-color: gray;
-    height: 30px;
-    width: 160px;
-    margin-top: 10px;
-    margin-left: 30px;
-    border-radius: 4px;
-    text-align: center;
-    color: white;
+    margin-right: 15px;
 }
 
-.createMission {
-    background-color: gray;
-    height: 30px;
-    width: 160px;
+.filter {
     margin-top: 10px;
-    margin-left: 50px;
-    border-radius: 4px;
-    text-align: center;
-    color: white;
-}
-
-.deleteSpam {
-    background-color: gray;
-    height: 30px;
-    width: 160px;
-    margin-top: 10px;
-    margin-left: 70px;
-    border-radius: 4px;
-    text-align: center;
-    color: white;
-}
-
-.customWord {
-    background-color: gray;
-    height: 30px;
-    width: 160px;
-    margin-top: 10px;
-    margin-left: 90px;
-    border-radius: 4px;
-    text-align: center;
-    color: white;
-}
-
-.list {
-    background-color: gray;
-    height: auto;
-    width: auto;
-    margin-top: auto;
-    margin-left:auto;
-    text-align: center;
-    color: white;
+    margin-right: 150px;
 }
 
 .content {
-border: 1px solid black;
-border-radius: 3px;
-overflow: auto;
+    margin-top: 10px;
 }
 
-div {
-    width: 50%;
-    height: 100px;
-    background-color: white;
-    color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 10px;
-    padding:10px;
-    cursor: move;
-  }
+//searchbar

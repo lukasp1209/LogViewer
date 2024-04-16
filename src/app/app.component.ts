@@ -13,6 +13,7 @@ interface SearchResult {
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
+
   title = 'webViewer';
   searchResults: SearchResult[] = [
     { id: 1, name: 'Angular', description: 'A platform for building applications with TypeScript, HTML, and CSS.' },
