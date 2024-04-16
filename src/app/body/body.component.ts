@@ -12,6 +12,7 @@ import * as JSZip from 'jszip';
 import { NgModel } from '@angular/forms';
 import { FilterService } from 'src/app/service/filter.service';
 import { LogHandlerService } from '../log-handler/log-handler.service';
+import { LogLevelService } from '../log-level/log-level.service';
 
 @Component({
   selector: 'app-body',
@@ -27,8 +28,9 @@ export class BodyComponent {
   @Output() searchEvent = new EventEmitter<string>();
 
   constructor(
-    private logHandlerService: LogHandlerService,
-    private filterService: FilterService
+    protected logHandlerService: LogHandlerService,
+    protected filterService: FilterService,
+    protected logLevelService: LogLevelService
   ) {}
 
   zipFile: File | null = null;
@@ -45,39 +47,7 @@ export class BodyComponent {
   contentStyle: { [key: string]: string } = {};
   fileUploaded: boolean = false;
   selectedFilters: string[] = [];
-
-
-  buttonStates = {
-    Finish: false,
-    Wlan: false,
-    Mission: false,
-    Bluetooth: false,
-    Engine: false,
-    LogLevel: false,
-    Spam: false,
-  };
-  // wlanFilters: string[] = [
-  //   'WlanManager',
-  //   'WlanStatus'
-  // ];
-  // bluetoothFilters: string[] = [
-  //   'bluetooth',
-  //   'Bluetooth'
-  // ];
-  // engineFilters: string[] = [
-  //   'Engine'
-  // ];;
-  // spamFilters: string[] = [
-  //   'Database',
-  //   'Achtung',
-  //   'CheckError',
-  //   'CheckErrorExist',
-  //   'SCardEstablishContext',
-  //   'NIDA ID in Finish Refresh',
-  //   'FieldMapper.ReadXML',
-  //   'GetStatusChange',
-  //   'MessageStateMachine'
-  // ];
+  logLevelToggle: boolean = false;
 
   logs: any;
   html: any;
@@ -90,27 +60,37 @@ export class BodyComponent {
       document.title = `${this.zipFile.name}`;
       this.zipContents = [];
       const zip = new JSZip();
-      zip.loadAsync(this.zipFile).then((zipData) => {
-        const txtFiles: File[] = [];
-        Object.keys(zipData.files).forEach((fileName) => {
-          if (fileName.endsWith('.txt')) {
-            zipData.files[fileName].async('text').then((text) => {
-              const file = new File([new Blob([text])], fileName);
-              txtFiles.push(file);
-              this.fileContentMap[fileName] = text;
-            });
+      zip
+        .loadAsync(this.zipFile)
+        .then((zipData) => {
+          const txtFiles: File[] = [];
+          Object.keys(zipData.files).forEach((fileName) => {
+            if (fileName.endsWith('.txt')) {
+              zipData.files[fileName].async('text').then((text) => {
+                const file = new File([new Blob([text])], fileName);
+                txtFiles.push(file);
+                this.fileContentMap[fileName] = text;
+              });
+            }
+          });
+          this.txtFilesLoaded.emit(txtFiles);
+          this.zipContents = txtFiles;
+          if (this.zipContents.length > 0) {
+            this.selectedFileName = this.zipContents[0].name;
           }
+          this.showUploadForm = false;
+          this.fileUploaded = true;
+        })
+        .catch(() => {
+          this.fileUploaded = false;
         });
-        this.txtFilesLoaded.emit(txtFiles);
-        this.zipContents = txtFiles;
-        if (this.zipContents.length > 0) {
-          this.selectedFileName = this.zipContents[0].name;
-        }
-        this.showUploadForm = false;
-        this.fileUploaded = true;
-      }).catch(() => {
-        this.fileUploaded = false;
-      });
+
+        // if (this.logLevelToggle = false) {
+        //   this.undoMarkLogLevel();
+        // }
+        // else {
+        //   this.markLogLevel();
+        // }
     }
   }
 
@@ -298,69 +278,35 @@ export class BodyComponent {
     }
   }
 
-  // mark LogLevel
   markLogLevel(): void {
     if (
       this.selectedFileName &&
       this.fileContentMap[this.selectedFileName] &&
       this.buttonStates.LogLevel
     ) {
-      const logLevelRegex = /\[(Info|Warn|Error|Fatal)\]/g;
-
-      this.fileContentMap[this.selectedFileName] = this.fileContentMap[
-        this.selectedFileName
-      ].replace(logLevelRegex, (match) => {
-        let backgroundColorClass = '';
-
-        switch (match.toLowerCase()) {
-          case '[info]':
-            backgroundColorClass = 'bg-info';
-            break;
-          case '[warn]':
-            backgroundColorClass = 'bg-warning';
-            break;
-          case '[error]':
-            backgroundColorClass = 'bg-warning';
-            break;
-          case '[fatal]':
-            backgroundColorClass = 'bg-danger';
-            break;
-          default:
-            backgroundColorClass = 'bg-info';
-            break;
-        }
-
-        return `<span class="${backgroundColorClass}">${match}</span>`;
-      });
+      this.fileContentMap[this.selectedFileName] =
+        this.logLevelService.markLogLevel(
+          this.fileContentMap[this.selectedFileName]
+        );
       console.log(this.fileContentMap[this.selectedFileName]);
     }
   }
-
   onLogLevelToggleChange(): void {
     if (!this.buttonStates.LogLevel) {
       this.undoMarkLogLevel();
+      this.logLevelToggle = false;
     } else {
       this.markLogLevel();
+      this.logLevelToggle = true;
     }
   }
 
   undoMarkLogLevel(): void {
     if (this.selectedFileName && this.fileContentMap[this.selectedFileName]) {
-      const logLevelRegex =
-        /<span class="(bg-info|bg-warning|bg-error|bg-danger)">(.*?)<\/span>/gi;
-
-      this.fileContentMap[this.selectedFileName] = this.fileContentMap[
-        this.selectedFileName
-      ].replace(
-        logLevelRegex,
-        (match, backgroundColorClass, content) => content
-      );
+      this.fileContentMap[this.selectedFileName] =
+        this.logLevelService.undoMarkLogLevel(
+          this.fileContentMap[this.selectedFileName]
+        );
     }
   }
-
-  // search function
-
-  // searchbar
-
-  // Filter
 }

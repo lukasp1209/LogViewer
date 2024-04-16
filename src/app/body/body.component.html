@@ -31,16 +31,15 @@
             </select>
           </div>
         </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            Filter
-          </a>
-          <div class="dropdown-menu">
-            <a class="dropdown-item">Wlanmanager</a>
-            <a class="dropdown-item">Bluetooth</a>
-            <a class="dropdown-item">Engine</a>
-          </div>
-        </li>
+        <ng-multiselect-dropdown
+          [placeholder]="'Filter'"
+          [settings]="dropdownSettings"
+          [data]="dropdownList"
+          [(ngModel)]="selectedItems"
+          (onSelect)="onItemSelect($event)"
+          (onSelectAll)="onSelectAll($event)"
+        >
+        </ng-multiselect-dropdown>
         <div class="filter">
           <label for="customWord">Erstelle Filter: </label>
           <input
@@ -53,28 +52,18 @@
             Filtern
           </button>
         </div>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            Hervorheben
-          </a>
-          <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-            <a class="dropdown-item" href="#">Bluetooth</a>
-            <a class="dropdown-item" href="#">Einsatzerstellung</a>
-            <a class="dropdown-item" href="#">Abschluss</a>
-          </div>
-          <div class="form-check form-switch">
-            <input
-              class="form-check-input"
-              type="checkbox"
-              role="switch"
-              id="flexSwitchCheckChecked"
-              checked
-              [(ngModel)]="buttonStates.LogLevel"
-              (change)="onLogLevelToggleChange()"
-            />
-            LogLevel markieren
-          </div>
-        </li>
+        <div class="form-check form-switch">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            role="switch"
+            id="flexSwitchCheckChecked"
+            checked
+            [(ngModel)]="logHandlerService.buttonStates.LogLevel"
+            (change)="onLogLevelToggleChange()"
+          />
+          LogLevel markieren
+        </div>
       </ul>
     </div>
   </nav> 
