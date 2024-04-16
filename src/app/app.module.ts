@@ -9,6 +9,7 @@ import { BodyComponent } from './body/body.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HighlighterPipe } from './highlighter.pipe';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgMultiSelectDropDownModule } from 'ng-multiselect-dropdown';
 
 
 @NgModule({
@@ -23,7 +24,8 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     AppRoutingModule,
     FormsModule,
     BrowserAnimationsModule,
-    NgbModule
+    NgbModule,
+    NgMultiSelectDropDownModule
   ],
   providers: [],
   bootstrap: [AppComponent], 
