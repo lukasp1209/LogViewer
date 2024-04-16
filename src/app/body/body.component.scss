@@ -1,26 +1,27 @@
+@import '~bootstrap/dist/css/bootstrap.css';
 .content {
 
 &[has-content='true'] {
-    margin-right: 5px;
-    margin-left: 5px;
+    margin-right: 15px;
+    margin-left: 15px;
     border:1px solid black;
     border-radius: 3px;
+    overflow: hidden;
     white-space: pre-wrap;
 }
 }
-
+  .scrollable-content {
+    max-height: 700px;
+    max-width: 1900px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    white-space: pre-wrap;
+    margin: 0;
+  }
+  
+  
 .btn-secondary {
     background-color: gray;
     margin-right: 15px;
 }
 
-.filter {
-    margin-top: 10px;
-    margin-right: 150px;
-}
-
-.content {
-    margin-top: 10px;
-}
-
-//searchbar

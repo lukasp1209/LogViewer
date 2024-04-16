@@ -7,14 +7,8 @@ import { AppComponent } from './app.component';
 import { HeaderComponent } from './header/header.component';
 import { BodyComponent } from './body/body.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { DragDropModule } from '@angular/cdk/drag-drop';
-import { 
-	IgxButtonModule,
-	IgxInputGroupModule,
-	IgxIconModule,
-	IgxRippleModule,
-	IgxTextHighlightModule
- } from "igniteui-angular";
+import { HighlighterPipe } from './highlighter.pipe';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 
 @NgModule({
@@ -22,21 +16,17 @@ import {
     AppComponent,
     HeaderComponent,
     BodyComponent,
+    HighlighterPipe,
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     FormsModule,
     BrowserAnimationsModule,
-    DragDropModule,
-    IgxButtonModule,
-	  IgxIconModule,
-	  IgxInputGroupModule,
-	  IgxRippleModule,
-	  IgxTextHighlightModule
+    NgbModule
   ],
   providers: [],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent], 
 })
 export class AppModule {
 }

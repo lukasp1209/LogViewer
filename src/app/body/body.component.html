@@ -1,63 +1,179 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Log-Viewer - {{ zipFile?.name }}</title>
-  <link rel="stylesheet" href="body.component.scss">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-</head>
-<body>
-  <div>
-     <!-- Upload Files  -->
-    <input type="file" (change)="onFileChange($event)" accept=".zip"/>
-    <div *ngIf="zipContents.length > 0; else noFilesLoaded">
-      <p>{{ zipFile?.name }}</p>
-    
-
-      <!-- Searchbar -->
-     
-      <!-- Filter -->
-      <select class="btn btn-secondary dropdown-toggle" id="dropdownMenuButton" [(ngModel)]="selectedFileName">
-        <option *ngFor="let file of zipContents" [value]="file.name">{{ file.name }}</option>
-      </select>
-
-      <!-- dropdown Filter -->
-<div class="checkbox-buttons">
-  <label class="filter">
-    <input type="checkbox" [(ngModel)]="buttonStates.Finish" (change)="onFinishCheckboxChange()"> Einsatzabschluss
-  </label>
-
-  <label class="filter">
-    <input type="checkbox" [(ngModel)]="buttonStates.Wlan" (change)="onWlanCheckboxChange()"> Wlanmanager
-  </label>
-
-  <label class="filter">
-    <input type="checkbox" [(ngModel)]="buttonStates.Mission" (change)="onMissionCheckboxChange()"> Einsatzerstellung
-  </label>
-
-  <label class="filter">
-    <input type="checkbox" [(ngModel)]="buttonStates.Spam" (change)="onSpamCheckboxChange()"> Spam
-  </label>
+<div>
+  <!-- Upload Files -->
+  <input
+    *ngIf="showUploadForm"
+    type="file"
+    (change)="onFileChange($event)"
+    accept=".zip"
+  />
+</div>
+<div *ngIf="fileUploaded">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNavDropdown">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <div *ngIf="zipContents.length > 0; else noFilesLoaded">
+            <p>{{ zipFile?.name }}</p>
+          
+            <!-- File Selection -->
+            <select
+              class="btn btn-secondary dropdown-toggle"
+              id="dropdownMenuButton"
+              [(ngModel)]="selectedFileName"
+            >
+              <option value="" disabled>Log auswählen</option>
+              <option *ngFor="let file of zipContents" [value]="file.name">
+                {{ file.name | slice : file.name.lastIndexOf("/") + 1 }}
+              </option>
+            </select>
+          </div>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Filter
+          </a>
+          <div class="dropdown-menu">
+            <a class="dropdown-item">Wlanmanager</a>
+            <a class="dropdown-item">Bluetooth</a>
+            <a class="dropdown-item">Engine</a>
+          </div>
+        </li>
+        <div class="filter">
+          <label for="customWord">Erstelle Filter: </label>
+          <input
+            class="form-control-sm"
+            type="text"
+            id="customWord"
+            [(ngModel)]="customWord"
+          />
+          <button type="button" class="btn btn-secondary" (click)="removeCustomLines()">
+            Filtern
+          </button>
+        </div>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Hervorheben
+          </a>
+          <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            <a class="dropdown-item" href="#">Bluetooth</a>
+            <a class="dropdown-item" href="#">Einsatzerstellung</a>
+            <a class="dropdown-item" href="#">Abschluss</a>
+          </div>
+          <div class="form-check form-switch">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              role="switch"
+              id="flexSwitchCheckChecked"
+              checked
+              [(ngModel)]="buttonStates.LogLevel"
+              (change)="onLogLevelToggleChange()"
+            />
+            LogLevel markieren
+          </div>
+        </li>
+      </ul>
+    </div>
+  </nav> 
 </div>
 
-      <div class="filter">
-        <label for="customWord">Erstelle Filter:</label>
-        <input  class="form-control-sm" type="text" id="customWord" [(ngModel)]="customWord" />
 
-        <button type="button" class="btn btn-secondary" (click)="removeCustomLines()">Filtern</button>
 
-        <button type="button" class="btn btn-secondary" (click)="onFilterReset()">Zurücksetzen</button>
-      </div>
 
-      <!-- Content -->
-      <div class="content" [attr.has-content]="selectedFileName ? 'true' : 'false'">       
-        <pre id="markedContent" [innerHTML]="markedContent(selectedFileName)"></pre>
-      </div>      
-    </div> 
-    <ng-template #noFilesLoaded>
-    </ng-template> 
+<!-- dropdown Filter -->
+<!-- <select multiple>
+    <option [(ngModel)]="buttonStates.Wlan" (change)="onWlanCheckboxChange()">Wlan</option>
+    <option [(ngModel)]="buttonStates.Spam" (change)="onSpamCheckboxChange()">Spam</option>
+    <option [(ngModel)]="buttonStates.Bluetooth" (change)="onBluetoothCheckboxChange()">Bluetooth</option>
+    <option [(ngModel)]="buttonStates.Engine" (change)="onEngineCheckboxChange()">Engine</option>
+  </select> -->
+
+<!-- <div>
+  <ul class="form-check">
+    <h4>Filter</h4>
+    <input
+      type="checkbox"
+      [(ngModel)]="buttonStates.Wlan"
+      (change)="onCheckboxChange('Wlan')"
+    />
+    Wlanmanager
+    <input
+      type="checkbox"
+      [(ngModel)]="buttonStates.Spam"
+      (change)="onCheckboxChange('Spam')"
+    />
+    Spam
+    <input
+      type="checkbox"
+      [(ngModel)]="buttonStates.Bluetooth"
+      (change)="onCheckboxChange('Bluetooth')"
+    />
+    Bluetooth
+    <input
+      type="checkbox"
+      [(ngModel)]="buttonStates.Engine"
+      (change)="onCheckboxChange('Engine')"
+    />
+    Engine
+  </ul>
 </div>
-</body>
-</html>
 
+<div>
+  <ul class="form-check">
+    <h4>hervorheben</h4>
+    <input
+      type="checkbox"
+      [(ngModel)]="buttonStates.Finish"
+      (change)="onFinishCheckboxChange()"
+    />
+    Einsatzabschluss
+    <input
+      type="checkbox"
+      [(ngModel)]="buttonStates.Mission"
+      (change)="onMissionCheckboxChange()"
+    />
+    Einsatzerstellung
+  </ul>
+</div> -->
+
+<!-- <div class="form-check form-switch">
+  <input
+    class="form-check-input"
+    type="checkbox"
+    role="switch"
+    id="flexSwitchCheckChecked"
+    checked
+    [(ngModel)]="buttonStates.LogLevel"
+    (change)="onLogLevelToggleChange()"
+  />
+  LogLevel markieren
+</div> -->
+
+<!-- </div> -->
+<!-- <div class="filter">
+  <label for="customWord">Erstelle Filter: </label>
+  <input
+    class="form-control-sm"
+    type="text"
+    id="customWord"
+    [(ngModel)]="customWord"
+  />
+
+  <button type="button" class="btn btn-secondary" (click)="removeCustomLines()">
+    Filtern
+  </button>
+</div> -->
+<!-- searchbar -->
+<!-- <input class="form-control" type="text" placeholder="Suche..." [(ngModel)]="searchQuery" (input)="onSearchInputChange()"> -->
+<!-- Content & searchbar -->
+<div class="content" [attr.has-content]="selectedFileName ? 'true' : 'false'">
+  <pre
+    #markedContentElement
+    class="scrollable-content"
+    [innerHTML]="markedContent(selectedFileName)"
+  ></pre>
+</div>
+<ng-template #noFilesLoaded> </ng-template>
