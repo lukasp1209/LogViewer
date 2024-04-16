@@ -94,7 +94,7 @@ export class BodyComponent {
     }
   }
 
-  onCheckboxChange(filterType: keyof typeof this.buttonStates): void {
+  onCheckboxChange(filterType: keyof typeof this.logHandlerService.buttonStates): void {
     this.logHandlerService.onCheckboxChange(filterType);
   }
 
@@ -207,7 +207,7 @@ export class BodyComponent {
     if (
       this.selectedFileName &&
       this.fileContentMap[this.selectedFileName] &&
-      this.buttonStates.Finish
+      this.logHandlerService.buttonStates.Finish
     ) {
       this.fileContentMap[this.selectedFileName] = this.fileContentMap[
         this.selectedFileName
@@ -215,7 +215,7 @@ export class BodyComponent {
     }
   }
   onFinishCheckboxChange(): void {
-    if (!this.buttonStates.Finish) {
+    if (!this.logHandlerService.buttonStates.Finish) {
       this.removeMarkCmd();
     } else {
       this.markCmd();
@@ -234,7 +234,7 @@ export class BodyComponent {
     if (
       this.selectedFileName &&
       this.fileContentMap[this.selectedFileName] &&
-      this.buttonStates.Mission
+      this.logHandlerService.buttonStates.Mission
     ) {
       this.fileContentMap[this.selectedFileName] = this.fileContentMap[
         this.selectedFileName
@@ -245,7 +245,7 @@ export class BodyComponent {
     }
   }
   onMissionCheckboxChange(): void {
-    if (!this.buttonStates.Mission) {
+    if (!this.logHandlerService.buttonStates.Mission) {
       this.removeMissionMark();
     } else {
       this.createMission();
@@ -282,7 +282,7 @@ export class BodyComponent {
     if (
       this.selectedFileName &&
       this.fileContentMap[this.selectedFileName] &&
-      this.buttonStates.LogLevel
+      this.logHandlerService.buttonStates.LogLevel
     ) {
       this.fileContentMap[this.selectedFileName] =
         this.logLevelService.markLogLevel(
@@ -292,7 +292,7 @@ export class BodyComponent {
     }
   }
   onLogLevelToggleChange(): void {
-    if (!this.buttonStates.LogLevel) {
+    if (!this.logHandlerService.buttonStates.LogLevel) {
       this.undoMarkLogLevel();
       this.logLevelToggle = false;
     } else {
