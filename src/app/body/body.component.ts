@@ -57,7 +57,6 @@ export class BodyComponent implements OnInit {
   dropdownList: any = [];
   selectedItems: any = [];
   dropdownSettings = {};
-  
 
   onFileChange(event: any): void {
     const fileList: FileList = event.target.files;
@@ -92,18 +91,17 @@ export class BodyComponent implements OnInit {
           this.fileUploaded = false;
         });
 
-        if (this.logLevelToggle = false) {
-          this.undoMarkLogLevel();
-        }
-        else {
-          this.markLogLevel();
-        }
+      if ((this.logLevelToggle = false)) {
+        this.undoMarkLogLevel();
+      } else {
+        this.markLogLevel();
+      }
     }
   }
 
-  onCheckboxChange(filterType: keyof typeof this.logHandlerService.buttonStates): void {
-    this.logHandlerService.onCheckboxChange(filterType);
-  }
+  // onCheckboxChange(filterType: keyof typeof this.logHandlerService.buttonStates): void {
+  //   this.logHandlerService.onCheckboxChange(filterType);
+  // }
 
   // show Content
   markedContent(fileName: string): string {
@@ -113,10 +111,10 @@ export class BodyComponent implements OnInit {
 
   ngOnInit() {
     this.dropdownList = [
-      { item_id: 1, item_text: "Wlan" },
-      { item_id: 2, item_text: "Bluetooth" },
-      { item_id: 3, item_text: "Engine" },
-      { item_id: 4, item_text: "Spam" },
+      { item_id: 1, item_text: 'Wlan' },
+      { item_id: 2, item_text: 'Bluetooth' },
+      { item_id: 3, item_text: 'Engine' },
+      { item_id: 4, item_text: 'Spam' },
     ];
     this.selectedItems = [];
     this.dropdownSettings = {
@@ -131,116 +129,121 @@ export class BodyComponent implements OnInit {
   }
   onItemSelect(item: any) {
     console.log(item);
-    if (item.item_text) {
-      this.onCheckboxChange(item.item_text);
-    }
-    // switch (item.item_text) {
-    //   case 'wlan':
-    //     this.onWlanCheckboxChange();
-    //     break;
-    //   case 'Bluetooth':
-    //     this.onBluetoothCheckboxChange();
-    //     break;
-    //   case 'Engine':
-    //     this.onEngineCheckboxChange();
-    //     break;
-    //   case 'Spam':
-    //     this.onSpamCheckboxChange();
-    //     break;
-    //   default:
-    //     break;
+    // if (item.item_text) {
+    //   this.onCheckboxChange(item.item_text);
     // }
+    switch (item.item_text) {
+      case 'wlan':
+        this.logHandlerService.onWlanCheckboxChange();
+        break;
+      case 'Bluetooth':
+        this.logHandlerService.onBluetoothCheckboxChange();
+        break;
+      case 'Engine':
+        this.logHandlerService.onEngineCheckboxChange();
+        break;
+      case 'Spam':
+        this.logHandlerService.onSpamCheckboxChange();
+        break;
+      default:
+        break;
+    }
+  }
+
+  test() {
+    this.onWlanCheckboxChange();
   }
 
   onSelectAll(items: any) {
     console.log(items);
   }
 
-  // //Wlan-Button
-  // deleteWlanLog(): void {
-  //   if (
-  //     this.selectedFileName &&
-  //     this.fileContentMap[this.selectedFileName] &&
-  //     this.logHandlerService.buttonStates.Wlan
-  //   ) {
-  //     this.fileContentMap[this.selectedFileName] =
-  //       this.filterService.applyFilters(
-  //         this.fileContentMap[this.selectedFileName],
-  //         this.logHandlerService.wlanFilters
-  //       );
-  //   }
-  // }
+  //Wlan-Button
+  deleteWlanLog(): void {
+    if (
+      this.selectedFileName &&
+      this.fileContentMap[this.selectedFileName] &&
+      this.logHandlerService.buttonStates.Wlan
+    ) {
+      this.fileContentMap[this.selectedFileName] =
+        this.filterService.applyFilters(
+          this.fileContentMap[this.selectedFileName],
+          this.logHandlerService.wlanFilters
+        );
+    }
+  }
 
-  // onWlanCheckboxChange(): void {
-  //   if (this.logHandlerService.buttonStates.Wlan) {
-  //     this.deleteWlanLog();
-  //   }
-  // }
+  onWlanCheckboxChange(): void {
+    if (this.logHandlerService.buttonStates.Wlan) {
+      this.deleteWlanLog();
+    }
+  }
 
-  // // Bluetooth- Filter
-  // deleteBluetoothLog(): void {
-  //   if (
-  //     this.selectedFileName &&
-  //     this.fileContentMap[this.selectedFileName] &&
-  //     this.logHandlerService.buttonStates.Bluetooth
-  //   ) {
-  //     this.fileContentMap[this.selectedFileName] =
-  //       this.filterService.applyFilters(
-  //         this.fileContentMap[this.selectedFileName],
-  //         this.logHandlerService.bluetoothFilters
-  //       );
-  //   }
-  // }
-  // onBluetoothCheckboxChange(): void {
-  //   if (this.logHandlerService.buttonStates.Bluetooth) {
-  //     this.deleteBluetoothLog();
-  //   }
-  // }
+  // Bluetooth- Filter
+  deleteBluetoothLog(): void {
+    if (
+      this.selectedFileName &&
+      this.fileContentMap[this.selectedFileName] &&
+      this.logHandlerService.buttonStates.Bluetooth
+    ) {
+      this.fileContentMap[this.selectedFileName] =
+        this.filterService.applyFilters(
+          this.fileContentMap[this.selectedFileName],
+          this.logHandlerService.bluetoothFilters
+        );
+    }
+  }
+  onBluetoothCheckboxChange(): void {
+    if (this.logHandlerService.buttonStates.Bluetooth) {
+      this.deleteBluetoothLog();
+    }
+  }
 
-  // // Engine- Filter
-  // deleteEngineLog(): void {
-  //   if (
-  //     this.selectedFileName &&
-  //     this.fileContentMap[this.selectedFileName] &&
-  //     this.logHandlerService.buttonStates.Engine
-  //   ) {
-  //     this.fileContentMap[this.selectedFileName] =
-  //       this.filterService.applyFilters(
-  //         this.fileContentMap[this.selectedFileName],
-  //         this.logHandlerService.engineFilters
-  //       );
-  //   }
-  // }
-  // onEngineCheckboxChange(): void {
-  //   if (this.logHandlerService.buttonStates.Engine) {
-  //     this.deleteEngineLog();
-  //   }
-  // }
+  // Engine- Filter
+  deleteEngineLog(): void {
+    if (
+      this.selectedFileName &&
+      this.fileContentMap[this.selectedFileName] &&
+      this.logHandlerService.buttonStates.Engine
+    ) {
+      this.fileContentMap[this.selectedFileName] =
+        this.filterService.applyFilters(
+          this.fileContentMap[this.selectedFileName],
+          this.logHandlerService.engineFilters
+        );
+    }
+  }
+  onEngineCheckboxChange(): void {
+    if (this.logHandlerService.buttonStates.Engine) {
+      this.deleteEngineLog();
+    }
+  }
 
-  // // delete Spam and unnecessary Content
-  // deleteSpam(): void {
-  //   if (
-  //     this.selectedFileName &&
-  //     this.fileContentMap[this.selectedFileName] &&
-  //     this.logHandlerService.buttonStates.Spam
-  //   ) {
-  //     this.fileContentMap[this.selectedFileName] =
-  //       this.filterService.applyFilters(
-  //         this.fileContentMap[this.selectedFileName], this.logHandlerService.spamFilters
-  //       );
-  //   }
-  // }
-  // onSpamCheckboxChange(): void {
-  //   if (this.logHandlerService.buttonStates.Spam) {
-  //     this.deleteSpam();
-  //   }
-  // }
+  // delete Spam and unnecessary Content
+  deleteSpam(): void {
+    if (
+      this.selectedFileName &&
+      this.fileContentMap[this.selectedFileName] &&
+      this.logHandlerService.buttonStates.Spam
+    ) {
+      this.fileContentMap[this.selectedFileName] =
+        this.filterService.applyFilters(
+          this.fileContentMap[this.selectedFileName],
+          this.logHandlerService.spamFilters
+        );
+    }
+  }
+  onSpamCheckboxChange(): void {
+    if (this.logHandlerService.buttonStates.Spam) {
+      this.deleteSpam();
+    }
+  }
 
-  // ngOnChanges(changes: SimpleChanges): void {
-  //   if (changes['buttonStates'] && !changes['buttonStates'].firstChange) {
-  //     this.deleteWlanLog();
-  //   }
-  // }
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['buttonStates'] && !changes['buttonStates'].firstChange) {
+      this.deleteWlanLog();
+    }
+  }
 
   // Mission close
   markCmd(): void {
@@ -322,7 +325,10 @@ export class BodyComponent implements OnInit {
 
   markLogLevel(): void {
     if (
-      this.selectedFileName && this.fileContentMap[this.selectedFileName] && this.logHandlerService.buttonStates.LogLevel) {
+      this.selectedFileName &&
+      this.fileContentMap[this.selectedFileName] &&
+      this.logHandlerService.buttonStates.LogLevel
+    ) {
       this.fileContentMap[this.selectedFileName] =
         this.logLevelService.markLogLevel(
           this.fileContentMap[this.selectedFileName]

@@ -10,6 +10,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HighlighterPipe } from './highlighter.pipe';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgMultiSelectDropDownModule } from 'ng-multiselect-dropdown';
+import { MatSelectModule } from '@angular/material/select';
+import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 
 
 @NgModule({
@@ -25,7 +27,9 @@ import { NgMultiSelectDropDownModule } from 'ng-multiselect-dropdown';
     FormsModule,
     BrowserAnimationsModule,
     NgbModule,
-    NgMultiSelectDropDownModule
+    NgMultiSelectDropDownModule,
+    NgxMatSelectSearchModule,
+    MatSelectModule
   ],
   providers: [],
   bootstrap: [AppComponent], 

@@ -10,7 +10,10 @@
 <div *ngIf="fileUploaded">
   <ul class="nav nav-tabs">
     <li class="nav-item">
-      <a class="nav-link active" *ngIf="zipContents.length > 0; else noFilesLoaded">
+      <a
+        class="nav-link active"
+        *ngIf="zipContents.length > 0; else noFilesLoaded"
+      >
         <p>{{ zipFile?.name }}</p>
       </a>
     </li>
@@ -42,15 +45,24 @@
             </option>
           </select>
         </li>
-          <ng-multiselect-dropdown
-            [placeholder]="'Filter'"
-            [settings]="dropdownSettings"
-            [data]="dropdownList"
-            [(ngModel)]="selectedItems"
-            (onSelect)="onItemSelect($event)"
-            (onSelectAll)="onSelectAll($event)"
+
+        <li class="nav-item">
+          <!-- File Selection -->
+          <select
+            class="btn btn-secondary dropdown-toggle"
+            id="dropdownMenuButton"
+            [(ngModel)]="selectedFileName"
           >
-          </ng-multiselect-dropdown>
+            <option
+              type="checkbox"
+              [(ngModel)]="logHandlerService.buttonStates.Wlan"
+              (change)="onWlanCheckboxChange()"
+            >
+              Wlan
+            </option>
+          </select>
+        </li>
+
         <div class="filter">
           <label for="customWord">Erstelle Filter: </label>
           <input
@@ -82,6 +94,15 @@
       </ul>
     </div>
   </nav>
+  <ng-multiselect-dropdown
+    [placeholder]="'Filter'"
+    [settings]="dropdownSettings"
+    [data]="dropdownList"
+    [(ngModel)]="selectedItems"
+    (onSelect)="test()"
+    (onSelectAll)="onSelectAll($event)"
+  >
+  </ng-multiselect-dropdown>
 </div>
 
 <div class="content" [attr.has-content]="selectedFileName ? 'true' : 'false'">
