@@ -14,12 +14,14 @@
 <div *ngIf="fileUploaded">
   <ul class="nav nav-tabs">
     <li class="nav-item">
-      <a class="nav-link active" *ngIf="zipContents.length > 0; else noFilesLoaded">
+      <a
+        class="nav-link active"
+        *ngIf="zipContents.length > 0; else noFilesLoaded"
+      >
         <p>{{ zipFile?.name }}</p>
       </a>
     </li>
   </ul>
-  
 
   <!-- Navigation bar -->
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -49,7 +51,6 @@
             </option>
           </select>
         </li>
-  
         <!-- Custom word filter -->
         <div class="filter ml-3">
           <label for="customWord">Erstelle Filter:</label>
@@ -67,7 +68,7 @@
             Filter
           </button>
         </div>
-  
+
         <!-- Log level toggle -->
         <div class="form-check form-switch ml-3">
           <input
@@ -82,7 +83,7 @@
           LogLevel markieren
         </div>
       </ul>
-  
+
       <!-- Search-Bar nach rechts außen -->
       <div class="search">
         <input
@@ -96,12 +97,11 @@
       </div>
     </div>
   </nav>
-  
+
   <!-- Multiselect dropdown for filters -->
   <ng-multiselect-dropdown
-    #reporteedropDown
     class="custom-font-size"
-    [placeholder]="'Filters'"
+    [placeholder]="'Filter'"
     [settings]="dropdownSettings"
     [data]="dropdownList"
     [(ngModel)]="selectedItems"
@@ -111,7 +111,6 @@
     (onDeSelectAll)="onDeSelectAll()"
   >
   </ng-multiselect-dropdown>
-  
 
   <!-- Content display area -->
   <div class="content" [attr.has-content]="selectedFileName ? 'true' : 'false'">

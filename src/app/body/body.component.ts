@@ -185,6 +185,7 @@ export class BodyComponent implements OnInit {
   }
 
   onDeSelectAll(): void {
+    // Restore all hidden lines
     Object.keys(this.hiddenLinesMap).forEach(key => {
       if (this.selectedFileName === key) {
         this.restoreHiddenLines();
