@@ -30,7 +30,8 @@
               "src/assets"
             ],
             "styles": [
-              "src/styles.scss"
+              "src/styles.scss",
+              "ng-multiselect-dropdown.theme"
             ],            
             "scripts": [
               "./node_modules/hammerjs/hammer.min.js"

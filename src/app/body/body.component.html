@@ -1,5 +1,7 @@
+<!-- body.component.html -->
+
+<!-- File upload section -->
 <div>
-  <!-- Upload Files -->
   <input
     *ngIf="showUploadForm"
     type="file"
@@ -7,17 +9,19 @@
     accept=".zip"
   />
 </div>
+
+<!-- Display uploaded files -->
 <div *ngIf="fileUploaded">
   <ul class="nav nav-tabs">
     <li class="nav-item">
-      <a
-        class="nav-link active"
-        *ngIf="zipContents.length > 0; else noFilesLoaded"
-      >
+      <a class="nav-link active" *ngIf="zipContents.length > 0; else noFilesLoaded">
         <p>{{ zipFile?.name }}</p>
       </a>
     </li>
   </ul>
+  
+
+  <!-- Navigation bar -->
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <button
       class="navbar-toggler"
@@ -31,9 +35,9 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNavDropdown">
-      <ul class="navbar-nav">
+      <ul class="navbar-nav mr-auto">
         <li class="nav-item">
-          <!-- File Selection -->
+          <!-- Dropdown for file selection -->
           <select
             class="btn btn-secondary dropdown-toggle"
             id="dropdownMenuButton"
@@ -45,26 +49,10 @@
             </option>
           </select>
         </li>
-
-        <li class="nav-item">
-          <!-- File Selection -->
-          <select
-            class="btn btn-secondary dropdown-toggle"
-            id="dropdownMenuButton"
-            [(ngModel)]="selectedFileName"
-          >
-            <option
-              type="checkbox"
-              [(ngModel)]="logHandlerService.buttonStates.Wlan"
-              (change)="onWlanCheckboxChange()"
-            >
-              Wlan
-            </option>
-          </select>
-        </li>
-
-        <div class="filter">
-          <label for="customWord">Erstelle Filter: </label>
+  
+        <!-- Custom word filter -->
+        <div class="filter ml-3">
+          <label for="customWord">Erstelle Filter:</label>
           <input
             class="form-control-sm"
             type="text"
@@ -76,10 +64,12 @@
             class="btn btn-secondary"
             (click)="removeCustomLines()"
           >
-            Filtern
+            Filter
           </button>
         </div>
-        <div class="form-check form-switch">
+  
+        <!-- Log level toggle -->
+        <div class="form-check form-switch ml-3">
           <input
             class="form-check-input"
             type="checkbox"
@@ -92,24 +82,46 @@
           LogLevel markieren
         </div>
       </ul>
+  
+      <!-- Search-Bar nach rechts außen -->
+      <div class="search">
+        <input
+          class="form-control"
+          type="text"
+          id="searchInput"
+          [(ngModel)]="searchQuery"
+          (input)="search()"
+          placeholder="Suche"
+        />
+      </div>
     </div>
   </nav>
+  
+  <!-- Multiselect dropdown for filters -->
   <ng-multiselect-dropdown
-    [placeholder]="'Filter'"
+    #reporteedropDown
+    class="custom-font-size"
+    [placeholder]="'Filters'"
     [settings]="dropdownSettings"
     [data]="dropdownList"
     [(ngModel)]="selectedItems"
-    (onSelect)="test()"
+    (onSelect)="onItemSelect($event)"
+    (onDeSelect)="onItemDeSelect($event)"
     (onSelectAll)="onSelectAll($event)"
+    (onDeSelectAll)="onDeSelectAll()"
   >
   </ng-multiselect-dropdown>
-</div>
+  
 
-<div class="content" [attr.has-content]="selectedFileName ? 'true' : 'false'">
-  <pre
-    #markedContentElement
-    class="scrollable-content"
-    [innerHTML]="markedContent(selectedFileName)"
-  ></pre>
+  <!-- Content display area -->
+  <div class="content" [attr.has-content]="selectedFileName ? 'true' : 'false'">
+    <pre
+      #markedContentElement
+      class="scrollable-content"
+      [innerHTML]="markedContent(selectedFileName)"
+    ></pre>
+  </div>
+
+  <!-- Template for no files loaded -->
+  <ng-template #noFilesLoaded> </ng-template>
 </div>
-<ng-template #noFilesLoaded> </ng-template>

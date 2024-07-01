@@ -1,11 +1,11 @@
 // body.component.ts
+
 import {
   Component,
   EventEmitter,
   Output,
   ElementRef,
   ViewChild,
-  SimpleChanges,
   OnInit,
 } from '@angular/core';
 import * as JSZip from 'jszip';
@@ -51,6 +51,8 @@ export class BodyComponent implements OnInit {
 
   logLevelToggle: boolean = false;
 
+  hiddenLinesMap: { [fileName: string]: string[] } = {};
+
   logs: any;
   html: any;
 
@@ -76,6 +78,7 @@ export class BodyComponent implements OnInit {
                 const file = new File([new Blob([text])], fileName);
                 txtFiles.push(file);
                 this.fileContentMap[fileName] = text;
+                this.originalFileContentMap[fileName] = text;
               });
             }
           });
@@ -83,6 +86,7 @@ export class BodyComponent implements OnInit {
           this.zipContents = txtFiles;
           if (this.zipContents.length > 0) {
             this.selectedFileName = this.zipContents[0].name;
+            this.resetLogLevelToggle();
           }
           this.showUploadForm = false;
           this.fileUploaded = true;
@@ -99,11 +103,6 @@ export class BodyComponent implements OnInit {
     }
   }
 
-  // onCheckboxChange(filterType: keyof typeof this.logHandlerService.buttonStates): void {
-  //   this.logHandlerService.onCheckboxChange(filterType);
-  // }
-
-  // show Content
   markedContent(fileName: string): string {
     let content = this.fileContentMap[fileName] || '';
     return content;
@@ -121,206 +120,76 @@ export class BodyComponent implements OnInit {
       singleSelection: false,
       idField: 'item_id',
       textField: 'item_text',
-      selectAllText: 'Select All',
-      unSelectAllText: 'UnSelect All',
+      selectAllText: 'Alles auswählen',
+      unSelectAllText: 'Alles entfernen',
       itemsShowLimit: 5,
       allowSearchFilter: true,
     };
   }
+
   onItemSelect(item: any) {
     console.log(item);
-    // if (item.item_text) {
-    //   this.onCheckboxChange(item.item_text);
-    // }
     switch (item.item_text) {
-      case 'wlan':
-        this.logHandlerService.onWlanCheckboxChange();
+      case 'Wlan':
+        this.logHandlerService.onCheckboxChange('Wlan');
         break;
       case 'Bluetooth':
-        this.logHandlerService.onBluetoothCheckboxChange();
+        this.logHandlerService.onCheckboxChange('Bluetooth');
         break;
       case 'Engine':
-        this.logHandlerService.onEngineCheckboxChange();
+        this.logHandlerService.onCheckboxChange('Engine');
         break;
       case 'Spam':
-        this.logHandlerService.onSpamCheckboxChange();
+        this.logHandlerService.onCheckboxChange('Spam');
         break;
       default:
+        if (this.customWord) {
+          this.removeCustomLines();
+        }
         break;
     }
-  }
-
-  test() {
-    this.onWlanCheckboxChange();
   }
 
   onSelectAll(items: any) {
     console.log(items);
   }
 
-  //Wlan-Button
-  deleteWlanLog(): void {
-    if (
-      this.selectedFileName &&
-      this.fileContentMap[this.selectedFileName] &&
-      this.logHandlerService.buttonStates.Wlan
-    ) {
-      this.fileContentMap[this.selectedFileName] =
-        this.filterService.applyFilters(
-          this.fileContentMap[this.selectedFileName],
-          this.logHandlerService.wlanFilters
-        );
-    }
-  }
-
-  onWlanCheckboxChange(): void {
-    if (this.logHandlerService.buttonStates.Wlan) {
-      this.deleteWlanLog();
-    }
-  }
-
-  // Bluetooth- Filter
-  deleteBluetoothLog(): void {
-    if (
-      this.selectedFileName &&
-      this.fileContentMap[this.selectedFileName] &&
-      this.logHandlerService.buttonStates.Bluetooth
-    ) {
-      this.fileContentMap[this.selectedFileName] =
-        this.filterService.applyFilters(
-          this.fileContentMap[this.selectedFileName],
-          this.logHandlerService.bluetoothFilters
-        );
-    }
-  }
-  onBluetoothCheckboxChange(): void {
-    if (this.logHandlerService.buttonStates.Bluetooth) {
-      this.deleteBluetoothLog();
-    }
-  }
-
-  // Engine- Filter
-  deleteEngineLog(): void {
-    if (
-      this.selectedFileName &&
-      this.fileContentMap[this.selectedFileName] &&
-      this.logHandlerService.buttonStates.Engine
-    ) {
-      this.fileContentMap[this.selectedFileName] =
-        this.filterService.applyFilters(
-          this.fileContentMap[this.selectedFileName],
-          this.logHandlerService.engineFilters
-        );
-    }
-  }
-  onEngineCheckboxChange(): void {
-    if (this.logHandlerService.buttonStates.Engine) {
-      this.deleteEngineLog();
-    }
-  }
-
-  // delete Spam and unnecessary Content
-  deleteSpam(): void {
-    if (
-      this.selectedFileName &&
-      this.fileContentMap[this.selectedFileName] &&
-      this.logHandlerService.buttonStates.Spam
-    ) {
-      this.fileContentMap[this.selectedFileName] =
-        this.filterService.applyFilters(
-          this.fileContentMap[this.selectedFileName],
-          this.logHandlerService.spamFilters
-        );
-    }
-  }
-  onSpamCheckboxChange(): void {
-    if (this.logHandlerService.buttonStates.Spam) {
-      this.deleteSpam();
-    }
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['buttonStates'] && !changes['buttonStates'].firstChange) {
-      this.deleteWlanLog();
-    }
-  }
-
-  // Mission close
-  markCmd(): void {
-    if (
-      this.selectedFileName &&
-      this.fileContentMap[this.selectedFileName] &&
-      this.logHandlerService.buttonStates.Finish
-    ) {
-      this.fileContentMap[this.selectedFileName] = this.fileContentMap[
-        this.selectedFileName
-      ].replace(/\b(cmd=remove)\b/gi, (match) => `<mark>${match}</mark>`);
-    }
-  }
-  onFinishCheckboxChange(): void {
-    if (!this.logHandlerService.buttonStates.Finish) {
-      this.removeMarkCmd();
-    } else {
-      this.markCmd();
-    }
-  }
-
-  removeMarkCmd(): void {
-    if (this.selectedFileName && this.fileContentMap[this.selectedFileName]) {
-      this.fileContentMap[this.selectedFileName] = this.fileContentMap[
-        this.selectedFileName
-      ].replace(/<mark>(.*?)<\/mark>/gi, (match, content) => content);
-    }
-  }
-
-  // create Mission
-  createMission(): void {
-    if (
-      this.selectedFileName &&
-      this.fileContentMap[this.selectedFileName] &&
-      this.logHandlerService.buttonStates.Mission
-    ) {
-      this.fileContentMap[this.selectedFileName] = this.fileContentMap[
-        this.selectedFileName
-      ].replace(
-        /\b(Generating NIDA ID)\b/gi,
-        (match) => `<mark>${match}</mark>`
-      );
-    }
-  }
-  onMissionCheckboxChange(): void {
-    if (!this.logHandlerService.buttonStates.Mission) {
-      this.removeMissionMark();
-    } else {
-      this.createMission();
-    }
-  }
-
-  removeMissionMark(): void {
-    if (this.selectedFileName && this.fileContentMap[this.selectedFileName]) {
-      this.fileContentMap[this.selectedFileName] = this.fileContentMap[
-        this.selectedFileName
-      ].replace(/<mark>(.*?)<\/mark>/gi, (match, content) => content);
-    }
-  }
-
-  // custom Filters
   removeCustomLines(): void {
-    if (
-      this.selectedFileName &&
-      this.fileContentMap[this.selectedFileName] &&
-      this.customWord
-    ) {
-      this.fileContentMap[this.selectedFileName] = this.fileContentMap[
-        this.selectedFileName
-      ]
-        .split('\n')
-        .filter(
-          (line) => !new RegExp(`\\b.*${this.customWord}.*\\b`, 'gi').test(line)
-        )
-        .join('\n');
-    }
+    this.filterService.removeCustomLines(
+      this.customWord,
+      this.selectedFileName,
+      this.fileContentMap,
+      this.hiddenLinesMap,
+      this.dropdownList,
+      this.selectedItems
+    );
     this.customWord = '';
+  }
+
+  restoreHiddenLines(): void {
+    this.filterService.restoreHiddenLines(
+      this.customWord,
+      this.selectedFileName,
+      this.fileContentMap,
+      this.originalFileContentMap,
+      this.hiddenLinesMap,
+      this.dropdownList,
+      this.selectedItems
+    );
+  }
+
+  onItemDeSelect(item: any): void {
+    if (item.item_text === this.customWord) {
+      this.restoreHiddenLines();
+    }
+  }
+
+  onDeSelectAll(): void {
+    Object.keys(this.hiddenLinesMap).forEach(key => {
+      if (this.selectedFileName === key) {
+        this.restoreHiddenLines();
+      }
+    });
   }
 
   markLogLevel(): void {
@@ -336,6 +205,7 @@ export class BodyComponent implements OnInit {
       console.log(this.fileContentMap[this.selectedFileName]);
     }
   }
+
   onLogLevelToggleChange(): void {
     if (!this.logHandlerService.buttonStates.LogLevel) {
       this.undoMarkLogLevel();
@@ -353,5 +223,34 @@ export class BodyComponent implements OnInit {
           this.fileContentMap[this.selectedFileName]
         );
     }
+  }
+
+  resetLogLevelToggle(): void {
+    this.logHandlerService.buttonStates.LogLevel = false;
+    this.undoMarkLogLevel();
+    this.logLevelToggle = false;
+  }
+
+  search(): void {
+    const searchTerm = this.searchQuery.toLowerCase().trim();
+    
+    if (!searchTerm) {
+      this.fileContentMap[this.selectedFileName] = this.originalFileContentMap[this.selectedFileName] || '';
+      return;
+    }
+  
+    const lines = this.originalFileContentMap[this.selectedFileName]?.split('\n') || [];
+  
+    const filteredLines = lines.filter(line =>
+      line.toLowerCase().includes(searchTerm)
+    );
+  
+    const highlightedLines = filteredLines.map(line =>
+      line.replace(new RegExp(`\\b${searchTerm}\\b`, 'gi'), match =>
+        `<span class="bg-warning">${match}</span>`
+      )
+    );
+  
+    this.fileContentMap[this.selectedFileName] = highlightedLines.join('\n');
   }
 }
