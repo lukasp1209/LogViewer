@@ -1,5 +1,3 @@
-// body.component.ts
-
 import {
   Component,
   EventEmitter,
@@ -14,6 +12,7 @@ import { FilterService } from 'src/app/service/filter.service';
 import { LogHandlerService } from '../log-handler/log-handler.service';
 import { IDropdownSettings } from 'ng-multiselect-dropdown';
 import { LogLevelService } from '../log-level/log-level.service';
+import { FileDataService } from 'src/app/FileData/file-data.service';
 
 @Component({
   selector: 'app-body',
@@ -31,33 +30,24 @@ export class BodyComponent implements OnInit {
   constructor(
     protected logHandlerService: LogHandlerService,
     protected filterService: FilterService,
-    protected logLevelService: LogLevelService
+    protected logLevelService: LogLevelService,
+    protected fileDataService: FileDataService
   ) {}
 
   zipFile: File | null = null;
   zipContents: Array<File> = [];
-  fileContentMap: { [fileName: string]: string } = {};
-  originalFileContentMap: { [fileName: string]: string } = {};
   selectedFileName: string = '';
   loggedInUser: string | null = null;
-  hiddenLines: boolean = false;
   customWord: string = '';
   searchQuery: string = '';
-  selectedDeleteOptions: string[] = [];
   showUploadForm: boolean = true;
-  contentStyle: { [key: string]: string } = {};
   fileUploaded: boolean = false;
-  selectedFilters: string[] = [];
 
   logLevelToggle: boolean = false;
-
-  hiddenLinesMap: { [fileName: string]: string[] } = {};
 
   logs: any;
   html: any;
 
-  dropdownList: any = [];
-  selectedItems: any = [];
   dropdownSettings = {};
 
   onFileChange(event: any): void {
@@ -77,8 +67,8 @@ export class BodyComponent implements OnInit {
               zipData.files[fileName].async('text').then((text) => {
                 const file = new File([new Blob([text])], fileName);
                 txtFiles.push(file);
-                this.fileContentMap[fileName] = text;
-                this.originalFileContentMap[fileName] = text;
+                this.fileDataService.fileContentMap[fileName] = text;
+                this.fileDataService.originalFileContentMap[fileName] = text;
               });
             }
           });
@@ -95,7 +85,7 @@ export class BodyComponent implements OnInit {
           this.fileUploaded = false;
         });
 
-      if ((this.logLevelToggle = false)) {
+      if (!this.logLevelToggle) {
         this.undoMarkLogLevel();
       } else {
         this.markLogLevel();
@@ -104,18 +94,16 @@ export class BodyComponent implements OnInit {
   }
 
   markedContent(fileName: string): string {
-    let content = this.fileContentMap[fileName] || '';
-    return content;
+    return this.fileDataService.fileContentMap[fileName] || '';
   }
 
   ngOnInit() {
-    this.dropdownList = [
+    this.fileDataService.dropdownList = [
       { item_id: 1, item_text: 'Wlan' },
       { item_id: 2, item_text: 'Bluetooth' },
       { item_id: 3, item_text: 'Engine' },
-      { item_id: 4, item_text: 'Spam' },
     ];
-    this.selectedItems = [];
+    this.fileDataService.selectedItems = [];
     this.dropdownSettings = {
       singleSelection: false,
       idField: 'item_id',
@@ -130,18 +118,18 @@ export class BodyComponent implements OnInit {
   onItemSelect(item: any) {
     console.log(item);
     switch (item.item_text) {
-      case 'Wlan':
-        this.logHandlerService.onCheckboxChange('Wlan');
-        break;
-      case 'Bluetooth':
-        this.logHandlerService.onCheckboxChange('Bluetooth');
-        break;
-      case 'Engine':
-        this.logHandlerService.onCheckboxChange('Engine');
-        break;
-      case 'Spam':
-        this.logHandlerService.onCheckboxChange('Spam');
-        break;
+          case 'Wlan':
+            this.filterService.removeLines(this.logHandlerService.wlanFilters, this.selectedFileName);
+            break;
+          case 'Bluetooth':
+            this.filterService.removeLines(this.logHandlerService.bluetoothFilters, this.selectedFileName);
+            break;
+          case 'Engine':
+            this.filterService.removeLines(this.logHandlerService.engineFilters, this.selectedFileName);
+            break;
+            case 'Spam':
+            this.filterService.removeLines(this.logHandlerService.spamFilters, this.selectedFileName);
+            break;
       default:
         if (this.customWord) {
           this.removeCustomLines();
@@ -150,33 +138,68 @@ export class BodyComponent implements OnInit {
     }
   }
 
-  onSelectAll(items: any) {
+  onSelectAll(items: any[]) {
     console.log(items);
+    if (items.length === 0) {
+      if (this.customWord) {
+        this.removeCustomLines();
+      }
+    } else {
+      items.forEach(item => {
+        switch (item.item_text) {
+          case 'Wlan':
+            this.filterService.removeLines(this.logHandlerService.wlanFilters, this.selectedFileName);
+            break;
+          case 'Bluetooth':
+            this.filterService.removeLines(this.logHandlerService.bluetoothFilters, this.selectedFileName);
+            break;
+          case 'Engine':
+            this.filterService.removeLines(this.logHandlerService.engineFilters, this.selectedFileName);
+            break;
+            case 'Spam':
+            this.filterService.removeLines(this.logHandlerService.spamFilters, this.selectedFileName);
+            break;
+          default:
+            break;
+        }
+      });
+    }
   }
 
   removeCustomLines(): void {
-    this.filterService.removeCustomLines(
-      this.customWord,
-      this.selectedFileName,
-      this.fileContentMap,
-      this.hiddenLinesMap,
-      this.dropdownList,
-      this.selectedItems
+    let customWords: string[] = [];
+
+    if (typeof this.customWord === 'string') {
+      customWords = [this.customWord];
+    } else if (Array.isArray(this.customWord)) {
+      customWords = this.customWord;
+    }
+  
+    this.filterService.removeLines(
+      customWords,
+      this.selectedFileName
     );
+  
     this.customWord = '';
   }
-
+  
   restoreHiddenLines(): void {
+    let customWords: string[] = [];
+  
+    if (typeof this.customWord === 'string') {
+      customWords = [this.customWord];
+    } else if (Array.isArray(this.customWord)) {
+      customWords = this.customWord;
+    }
+  
     this.filterService.restoreHiddenLines(
-      this.customWord,
-      this.selectedFileName,
-      this.fileContentMap,
-      this.originalFileContentMap,
-      this.hiddenLinesMap,
-      this.dropdownList,
-      this.selectedItems
+      customWords,
+      this.selectedFileName
     );
+  
+    this.customWord = '';
   }
+  
 
   onItemDeSelect(item: any): void {
     if (item.item_text === this.customWord) {
@@ -185,8 +208,7 @@ export class BodyComponent implements OnInit {
   }
 
   onDeSelectAll(): void {
-    // Restore all hidden lines
-    Object.keys(this.hiddenLinesMap).forEach(key => {
+    Object.keys(this.fileDataService.hiddenLinesMap).forEach(key => {
       if (this.selectedFileName === key) {
         this.restoreHiddenLines();
       }
@@ -196,14 +218,14 @@ export class BodyComponent implements OnInit {
   markLogLevel(): void {
     if (
       this.selectedFileName &&
-      this.fileContentMap[this.selectedFileName] &&
+      this.fileDataService.fileContentMap[this.selectedFileName] &&
       this.logHandlerService.buttonStates.LogLevel
     ) {
-      this.fileContentMap[this.selectedFileName] =
+      this.fileDataService.fileContentMap[this.selectedFileName] =
         this.logLevelService.markLogLevel(
-          this.fileContentMap[this.selectedFileName]
+          this.fileDataService.fileContentMap[this.selectedFileName]
         );
-      console.log(this.fileContentMap[this.selectedFileName]);
+      console.log(this.fileDataService.fileContentMap[this.selectedFileName]);
     }
   }
 
@@ -218,10 +240,10 @@ export class BodyComponent implements OnInit {
   }
 
   undoMarkLogLevel(): void {
-    if (this.selectedFileName && this.fileContentMap[this.selectedFileName]) {
-      this.fileContentMap[this.selectedFileName] =
+    if (this.selectedFileName && this.fileDataService.fileContentMap[this.selectedFileName]) {
+      this.fileDataService.fileContentMap[this.selectedFileName] =
         this.logLevelService.undoMarkLogLevel(
-          this.fileContentMap[this.selectedFileName]
+          this.fileDataService.fileContentMap[this.selectedFileName]
         );
     }
   }
@@ -236,11 +258,11 @@ export class BodyComponent implements OnInit {
     const searchTerm = this.searchQuery.toLowerCase().trim();
     
     if (!searchTerm) {
-      this.fileContentMap[this.selectedFileName] = this.originalFileContentMap[this.selectedFileName] || '';
+      this.fileDataService.fileContentMap[this.selectedFileName] = this.fileDataService.originalFileContentMap[this.selectedFileName] || '';
       return;
     }
   
-    const lines = this.originalFileContentMap[this.selectedFileName]?.split('\n') || [];
+    const lines = this.fileDataService.originalFileContentMap[this.selectedFileName]?.split('\n') || [];
   
     const filteredLines = lines.filter(line =>
       line.toLowerCase().includes(searchTerm)
@@ -252,6 +274,6 @@ export class BodyComponent implements OnInit {
       )
     );
   
-    this.fileContentMap[this.selectedFileName] = highlightedLines.join('\n');
+    this.fileDataService.fileContentMap[this.selectedFileName] = highlightedLines.join('\n');
   }
 }

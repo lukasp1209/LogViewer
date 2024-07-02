@@ -1,0 +1,16 @@
+{
+  "Wlan": ["WlanManager", "WlanStatus"],
+  "Bluetooth": ["bluetooth", "Bluetooth"],
+  "Engine": ["Engine"],
+  "Spam": [
+    "Database",
+    "Achtung",
+    "CheckError",
+    "CheckErrorExist",
+    "SCardEstablishContext",
+    "NIDA ID in Finish Refresh",
+    "FieldMapper.ReadXML",
+    "GetStatusChange",
+    "MessageStateMachine"
+  ]
+}

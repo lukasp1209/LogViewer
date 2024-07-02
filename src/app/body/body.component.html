@@ -53,19 +53,20 @@
         </li>
         <!-- Custom word filter -->
         <div class="filter ml-3">
-          <label for="customWord">Erstelle Filter:</label>
+          <label for="customWord"></label>
           <input
             class="form-control-sm"
             type="text"
             id="customWord"
             [(ngModel)]="customWord"
+            placeholder="Erstelle Filter"
           />
           <button
             type="button"
             class="btn btn-secondary"
             (click)="removeCustomLines()"
           >
-            Filter
+            Filtern
           </button>
         </div>
 
@@ -82,9 +83,22 @@
           />
           LogLevel markieren
         </div>
-      </ul>
 
-      <!-- Search-Bar nach rechts außen -->
+      </ul>
+      <ng-multiselect-dropdown
+        class="custom-font-size"
+        [placeholder]="'Filter'"
+        [settings]="dropdownSettings"
+        [data]="fileDataService.dropdownList"
+        [(ngModel)]="fileDataService.selectedItems"
+        (onSelect)="onItemSelect($event)"
+        (onDeSelect)="onItemDeSelect($event)"
+        (onSelectAll)="onSelectAll($event)"
+        (onDeSelectAll)="onDeSelectAll()"
+      >
+      </ng-multiselect-dropdown>
+
+      <!-- Search-Bar -->
       <div class="search">
         <input
           class="form-control"
@@ -97,20 +111,6 @@
       </div>
     </div>
   </nav>
-
-  <!-- Multiselect dropdown for filters -->
-  <ng-multiselect-dropdown
-    class="custom-font-size"
-    [placeholder]="'Filter'"
-    [settings]="dropdownSettings"
-    [data]="dropdownList"
-    [(ngModel)]="selectedItems"
-    (onSelect)="onItemSelect($event)"
-    (onDeSelect)="onItemDeSelect($event)"
-    (onSelectAll)="onSelectAll($event)"
-    (onDeSelectAll)="onDeSelectAll()"
-  >
-  </ng-multiselect-dropdown>
 
   <!-- Content display area -->
   <div class="content" [attr.has-content]="selectedFileName ? 'true' : 'false'">

@@ -1,9 +1,11 @@
 import { Injectable } from '@angular/core';
+import { FileDataService } from 'src/app/FileData/file-data.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class FilterService {
+  constructor(private fileDataService: FileDataService) {}
 
   applyFilters(content: string, filters: string[]): string {
     const lines = content.split('\n');
@@ -26,45 +28,40 @@ export class FilterService {
     return processedLines.join('\n');
   }
 
+  removeLines(customWords: string[], selectedFileName: string): void {
+    if (selectedFileName && this.fileDataService.fileContentMap[selectedFileName] && customWords && customWords.length > 0) {
+      const lines = this.fileDataService.fileContentMap[selectedFileName].split('\n');
+      
+      this.fileDataService.hiddenLinesMap[selectedFileName] = lines.filter((line) =>
+        customWords.some(word => new RegExp(`\\b.*${word}.*\\b`, 'gi').test(line))
+      );
 
-  removeCustomLines(customWord: string, selectedFileName: string, fileContentMap: { [fileName: string]: string }, hiddenLinesMap: { [fileName: string]: string[] }, dropdownList: any[], selectedItems: any[]): void {
-    if (selectedFileName && fileContentMap[selectedFileName] && customWord) {
-        const lines = fileContentMap[selectedFileName].split('\n');
-        hiddenLinesMap[selectedFileName] = lines.filter((line) =>
-          new RegExp(`\\b.*${customWord}.*\\b`, 'gi').test(line)
-        );
-        fileContentMap[selectedFileName] = lines
-          .filter((line) => !new RegExp(`\\b.*${customWord}.*\\b`, 'gi').test(line))
-          .join('\n');
-          
-        if (!dropdownList.some((item: any) => item.item_text === customWord)) {
-          dropdownList.push({ item_id: dropdownList.length + 1, item_text: customWord });
-          selectedItems.push({ item_id: dropdownList.length + 1, item_text: customWord });
+      this.fileDataService.fileContentMap[selectedFileName] = lines
+        .filter((line) => !customWords.some(word => new RegExp(`\\b.*${word}.*\\b`, 'gi').test(line)))
+        .join('\n');
+      
+      customWords.forEach(word => {
+        if (!this.fileDataService.dropdownList.some((item: any) => item.item_text === word)) {
+          const newItem = { item_id: this.fileDataService.dropdownList.length + 1, item_text: word };
+          this.fileDataService.dropdownList.push(newItem);
+          this.fileDataService.selectedItems.push(newItem);
         }
-      }
+      });
     }
+  }
+  
 
-  restoreHiddenLines(
-    customWord: string,
-    selectedFileName: string,
-    fileContentMap: { [key: string]: string },
-    originalFileContentMap: { [key: string]: string },
-    hiddenLinesMap: { [key: string]: string[] },
-    dropdownList: any[],
-    selectedItems: any[]
-  ): void {
-    if (selectedFileName && hiddenLinesMap[selectedFileName]) {
-      const originalLines = originalFileContentMap[selectedFileName].split('\n');
-      const hiddenLines = hiddenLinesMap[selectedFileName];
+  restoreHiddenLines(customWord: string[], selectedFileName: string): void {
+    if (selectedFileName && this.fileDataService.hiddenLinesMap[selectedFileName]) {
+      const originalLines = this.fileDataService.originalFileContentMap[selectedFileName].split('\n');
+      const hiddenLines = this.fileDataService.hiddenLinesMap[selectedFileName];
       const combinedLines = [...originalLines, ...hiddenLines].sort((a, b) => {
         return originalLines.indexOf(a) - originalLines.indexOf(b);
       });
-      fileContentMap[selectedFileName] = combinedLines.join('\n');
-      delete hiddenLinesMap[selectedFileName];
+      this.fileDataService.fileContentMap[selectedFileName] = combinedLines.join('\n');
+      delete this.fileDataService.hiddenLinesMap[selectedFileName];
 
-      // Remove the custom filter from the dropdown list
-      dropdownList = dropdownList.filter((item: any) => item.item_text !== customWord);
-      selectedItems = selectedItems.filter((item: any) => item.item_text !== customWord);
+      this.fileDataService.selectedItems = this.fileDataService.selectedItems.filter((item: any) => item.item_text !== customWord);
     }
   }
 }
