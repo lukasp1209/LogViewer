@@ -2,6 +2,7 @@
   "Wlan": ["WlanManager", "WlanStatus"],
   "Bluetooth": ["bluetooth", "Bluetooth"],
   "Engine": ["Engine"],
+  "Drucken" : ["print"],
   "Spam": [
     "Database",
     "Achtung",
@@ -11,6 +12,8 @@
     "NIDA ID in Finish Refresh",
     "FieldMapper.ReadXML",
     "GetStatusChange",
-    "MessageStateMachine"
-  ]
+    "MessageStateMachine",
+    "ZipIt.Unzip"
+  ],
+  "Test" : ["2022"]
 }

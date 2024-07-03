@@ -1,5 +1,7 @@
-import { Injectable, SimpleChanges } from '@angular/core';
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { FilterService } from 'src/app/service/filter.service';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -8,56 +10,21 @@ export class LogHandlerService {
   selectedFileName: string;
   fileContentMap: { [key: string]: string };
   buttonStates = {
-    Wlan: false,
-    Bluetooth: false,
-    Engine: false,
     LogLevel: false,
-    Spam: false,
   };
   filterConfig: { [key: string]: any };
-  wlanFilters: string[] = ['WlanManager', 'WlanStatus'];
-  bluetoothFilters: string[] = ['bluetooth', 'Bluetooth'];
-  engineFilters: string[] = ['Engine'];
-  spamFilters: string[] = [
-    'Database',
-    'Achtung',
-    'CheckError',
-    'CheckErrorExist',
-    'SCardEstablishContext',
-    'NIDA ID in Finish Refresh',
-    'FieldMapper.ReadXML',
-    'GetStatusChange',
-    'MessageStateMachine',
-  ];
 
-  constructor(private filterService: FilterService) {
+  constructor(private filterService: FilterService, private http: HttpClient) {
     this.selectedFileName = '';
     this.fileContentMap = {};
-    this.filterConfig = {
-      Wlan: this.wlanFilters,
-      Bluetooth: this.bluetoothFilters,
-      Engine: this.engineFilters,
-      Spam: this.spamFilters,
-    };
+    this.filterConfig = {};
+
+    this.loadFilterConfig().subscribe(config => {
+      this.filterConfig = config;
+    });
   }
 
-  // deleteLog(filterType: keyof typeof this.buttonStates): void {
-  //   if (
-  //     this.selectedFileName &&
-  //     this.fileContentMap[this.selectedFileName] &&
-  //     this.buttonStates[filterType]
-  //   ) {
-  //     this.fileContentMap[this.selectedFileName] =
-  //       this.filterService.applyFilters(
-  //         this.fileContentMap[this.selectedFileName],
-  //         this.filterConfig[filterType]
-  //       );
-  //   }
-  // }
-
-  // onCheckboxChange(filterType: keyof typeof this.buttonStates): void {
-  //   if (this.buttonStates[filterType]) {
-  //     this.deleteLog(filterType);
-  //   }
-  // }
+  public loadFilterConfig(): Observable<{ [key: string]: any }> {
+    return this.http.get<{ [key: string]: any }>('assets/filter-config.json');
+  }
 }

@@ -13,6 +13,7 @@ import { LogHandlerService } from '../log-handler/log-handler.service';
 import { IDropdownSettings } from 'ng-multiselect-dropdown';
 import { LogLevelService } from '../log-level/log-level.service';
 import { FileDataService } from 'src/app/FileData/file-data.service';
+import { SearchService } from 'src/app/search/search.service';
 
 @Component({
   selector: 'app-body',
@@ -31,7 +32,8 @@ export class BodyComponent implements OnInit {
     protected logHandlerService: LogHandlerService,
     protected filterService: FilterService,
     protected logLevelService: LogLevelService,
-    protected fileDataService: FileDataService
+    protected fileDataService: FileDataService,
+    private searchService: SearchService
   ) {}
 
   zipFile: File | null = null;
@@ -98,69 +100,49 @@ export class BodyComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.fileDataService.dropdownList = [
-      { item_id: 1, item_text: 'Wlan' },
-      { item_id: 2, item_text: 'Bluetooth' },
-      { item_id: 3, item_text: 'Engine' },
-    ];
-    this.fileDataService.selectedItems = [];
-    this.dropdownSettings = {
-      singleSelection: false,
-      idField: 'item_id',
-      textField: 'item_text',
-      selectAllText: 'Alles auswählen',
-      unSelectAllText: 'Alles entfernen',
-      itemsShowLimit: 5,
-      allowSearchFilter: true,
-    };
+    this.logHandlerService.loadFilterConfig().subscribe(config => {
+      this.initializeDropdownList(config);
+      this.fileDataService.selectedItems = [];
+      this.dropdownSettings = {
+        singleSelection: false,
+        idField: 'item_id',
+        textField: 'item_text',
+        selectAllText: 'Alles auswählen',
+        unSelectAllText: 'Alles entfernen',
+        itemsShowLimit: 5,
+        allowSearchFilter: true,
+      };
+    });
+  }
+
+  initializeDropdownList(config: { [key: string]: any }) {
+    let itemId = 1;
+    for (const key in config) {
+      if (config.hasOwnProperty(key)) {
+        this.fileDataService.dropdownList.push({ item_id: itemId++, item_text: key });
+      }
+    }
   }
 
   onItemSelect(item: any) {
     console.log(item);
-    switch (item.item_text) {
-          case 'Wlan':
-            this.filterService.removeLines(this.logHandlerService.wlanFilters, this.selectedFileName);
-            break;
-          case 'Bluetooth':
-            this.filterService.removeLines(this.logHandlerService.bluetoothFilters, this.selectedFileName);
-            break;
-          case 'Engine':
-            this.filterService.removeLines(this.logHandlerService.engineFilters, this.selectedFileName);
-            break;
-            case 'Spam':
-            this.filterService.removeLines(this.logHandlerService.spamFilters, this.selectedFileName);
-            break;
-      default:
-        if (this.customWord) {
-          this.removeCustomLines();
-        }
-        break;
+    const filters = this.logHandlerService.filterConfig[item.item_text];
+    if (filters) {
+      this.filterService.removeLines(filters, this.selectedFileName);
+    } else if (this.customWord) {
+      this.removeCustomLines();
     }
   }
 
   onSelectAll(items: any[]) {
     console.log(items);
-    if (items.length === 0) {
-      if (this.customWord) {
-        this.removeCustomLines();
-      }
+    if (items.length === 0 && this.customWord) {
+      this.removeCustomLines();
     } else {
       items.forEach(item => {
-        switch (item.item_text) {
-          case 'Wlan':
-            this.filterService.removeLines(this.logHandlerService.wlanFilters, this.selectedFileName);
-            break;
-          case 'Bluetooth':
-            this.filterService.removeLines(this.logHandlerService.bluetoothFilters, this.selectedFileName);
-            break;
-          case 'Engine':
-            this.filterService.removeLines(this.logHandlerService.engineFilters, this.selectedFileName);
-            break;
-            case 'Spam':
-            this.filterService.removeLines(this.logHandlerService.spamFilters, this.selectedFileName);
-            break;
-          default:
-            break;
+        const filters = this.logHandlerService.filterConfig[item.item_text];
+        if (filters) {
+          this.filterService.removeLines(filters, this.selectedFileName);
         }
       });
     }
@@ -255,25 +237,6 @@ export class BodyComponent implements OnInit {
   }
 
   search(): void {
-    const searchTerm = this.searchQuery.toLowerCase().trim();
-    
-    if (!searchTerm) {
-      this.fileDataService.fileContentMap[this.selectedFileName] = this.fileDataService.originalFileContentMap[this.selectedFileName] || '';
-      return;
-    }
-  
-    const lines = this.fileDataService.originalFileContentMap[this.selectedFileName]?.split('\n') || [];
-  
-    const filteredLines = lines.filter(line =>
-      line.toLowerCase().includes(searchTerm)
-    );
-  
-    const highlightedLines = filteredLines.map(line =>
-      line.replace(new RegExp(`\\b${searchTerm}\\b`, 'gi'), match =>
-        `<span class="bg-warning">${match}</span>`
-      )
-    );
-  
-    this.fileDataService.fileContentMap[this.selectedFileName] = highlightedLines.join('\n');
+    this.searchService.search(this.searchQuery, this.selectedFileName);
   }
 }
