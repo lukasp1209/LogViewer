@@ -7,7 +7,6 @@ import { AppComponent } from './app.component';
 import { HeaderComponent } from './header/header.component';
 import { BodyComponent } from './body/body.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { HighlighterPipe } from './highlighter.pipe';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgMultiSelectDropDownModule } from 'ng-multiselect-dropdown';
 import { MatSelectModule } from '@angular/material/select';
@@ -20,7 +19,6 @@ import { HttpClientModule } from '@angular/common/http';
     AppComponent,
     HeaderComponent,
     BodyComponent,
-    HighlighterPipe,
   ],
   imports: [
     BrowserModule,

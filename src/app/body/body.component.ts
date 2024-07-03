@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import * as JSZip from 'jszip';
 import { NgModel } from '@angular/forms';
-import { FilterService } from 'src/app/service/filter.service';
+import { FilterService } from 'src/app/filter/filter.service';
 import { LogHandlerService } from '../log-handler/log-handler.service';
 import { IDropdownSettings } from 'ng-multiselect-dropdown';
 import { LogLevelService } from '../log-level/log-level.service';
@@ -33,7 +33,7 @@ export class BodyComponent implements OnInit {
     protected filterService: FilterService,
     protected logLevelService: LogLevelService,
     protected fileDataService: FileDataService,
-    private searchService: SearchService
+    protected searchService: SearchService
   ) {}
 
   zipFile: File | null = null;
@@ -42,6 +42,7 @@ export class BodyComponent implements OnInit {
   loggedInUser: string | null = null;
   customWord: string = '';
   searchQuery: string = '';
+  selectedSimpleSearchTerm: string = '';
   showUploadForm: boolean = true;
   fileUploaded: boolean = false;
 
@@ -100,7 +101,7 @@ export class BodyComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.logHandlerService.loadFilterConfig().subscribe(config => {
+    this.logHandlerService.loadFilterConfig().subscribe((config) => {
       this.initializeDropdownList(config);
       this.fileDataService.selectedItems = [];
       this.dropdownSettings = {
@@ -119,7 +120,10 @@ export class BodyComponent implements OnInit {
     let itemId = 1;
     for (const key in config) {
       if (config.hasOwnProperty(key)) {
-        this.fileDataService.dropdownList.push({ item_id: itemId++, item_text: key });
+        this.fileDataService.dropdownList.push({
+          item_id: itemId++,
+          item_text: key,
+        });
       }
     }
   }
@@ -139,7 +143,7 @@ export class BodyComponent implements OnInit {
     if (items.length === 0 && this.customWord) {
       this.removeCustomLines();
     } else {
-      items.forEach(item => {
+      items.forEach((item) => {
         const filters = this.logHandlerService.filterConfig[item.item_text];
         if (filters) {
           this.filterService.removeLines(filters, this.selectedFileName);
@@ -156,41 +160,44 @@ export class BodyComponent implements OnInit {
     } else if (Array.isArray(this.customWord)) {
       customWords = this.customWord;
     }
-  
-    this.filterService.removeLines(
-      customWords,
-      this.selectedFileName
-    );
-  
+
+    this.filterService.removeLines(customWords, this.selectedFileName);
+
     this.customWord = '';
   }
-  
+
   restoreHiddenLines(): void {
     let customWords: string[] = [];
-  
+
     if (typeof this.customWord === 'string') {
       customWords = [this.customWord];
     } else if (Array.isArray(this.customWord)) {
       customWords = this.customWord;
     }
-  
-    this.filterService.restoreHiddenLines(
-      customWords,
-      this.selectedFileName
-    );
-  
+
+    console.log('Restoring lines for custom words:', customWords);
+
+    this.filterService.restoreHiddenLines(customWords, this.selectedFileName);
+
     this.customWord = '';
   }
-  
 
   onItemDeSelect(item: any): void {
+    console.log('Item deselected:', item);
+    console.log('Custom word:', this.customWord);
+
     if (item.item_text === this.customWord) {
       this.restoreHiddenLines();
+    } else {
+      const filters = this.logHandlerService.filterConfig[item.item_text];
+      if (filters) {
+        this.filterService.restoreHiddenLines(filters, this.selectedFileName);
+      }
     }
   }
 
   onDeSelectAll(): void {
-    Object.keys(this.fileDataService.hiddenLinesMap).forEach(key => {
+    Object.keys(this.fileDataService.hiddenLinesMap).forEach((key) => {
       if (this.selectedFileName === key) {
         this.restoreHiddenLines();
       }
@@ -222,7 +229,10 @@ export class BodyComponent implements OnInit {
   }
 
   undoMarkLogLevel(): void {
-    if (this.selectedFileName && this.fileDataService.fileContentMap[this.selectedFileName]) {
+    if (
+      this.selectedFileName &&
+      this.fileDataService.fileContentMap[this.selectedFileName]
+    ) {
       this.fileDataService.fileContentMap[this.selectedFileName] =
         this.logLevelService.undoMarkLogLevel(
           this.fileDataService.fileContentMap[this.selectedFileName]
