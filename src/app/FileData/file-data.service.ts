@@ -9,4 +9,7 @@ export class FileDataService {
   hiddenLinesMap: { [fileName: string]: string[] } = {};
   dropdownList: any[] = [];
   selectedItems: any[] = [];
+
+  markDropdownList: any[] = [];
+  markSelectedItems: any[] = [];
 }

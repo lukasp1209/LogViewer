@@ -30,4 +30,10 @@ export class SearchService {
   
     this.fileDataService.fileContentMap[selectedFileName] = highlightedLines.join('\n');
   }
+
+  highlightTerm(content: string, term: string): string {
+    const regex = new RegExp(`\\b${term}\\b`, 'gi');
+    return content.replace(regex, match => `<mark>${match}</mark>`);
+  }
+
 }
