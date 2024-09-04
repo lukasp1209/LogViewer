@@ -32,20 +32,6 @@ export class FilterService {
             )
         )
         .join('\n');
-
-      customWords.forEach((word) => {
-        if (
-          !this.fileDataService.dropdownList.some(
-            (item: any) => item.item_text === word
-          )
-        ) {
-          const newItem = {
-            item_id: this.fileDataService.dropdownList.length + 1,
-            item_text: word,
-          };
-          this.fileDataService.selectedItems.push(newItem);
-        }
-      });
     }
   }
 

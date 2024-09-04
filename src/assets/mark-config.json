@@ -3,6 +3,7 @@
     "Bluetooth": ["bluetooth", "Bluetooth"],
     "Engine": ["Engine"],
     "Drucken" : ["print"],
-    "Spam": [ "Database", "Achtung", "CheckError", "CheckErrorExist", "SCardEstablishContext", "NIDA ID in Finish Refresh", "FieldMapper.ReadXML", "GetStatusChange", "MessageStateMachine", "ZipIt.Unzip"]
+    "Spam": [ "Database", "Achtung", "CheckError", "CheckErrorExist", "SCardEstablishContext", "NIDA ID in Finish Refresh", "FieldMapper.ReadXML", "GetStatusChange", "MessageStateMachine", "ZipIt.Unzip"],
+	"Test" : ["2022"]
   }
   

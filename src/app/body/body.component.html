@@ -96,7 +96,20 @@
         (onDeSelectAll)="onDeSelectAll()"
       >
       </ng-multiselect-dropdown>
-      
+
+      <ng-multiselect-dropdown
+        class="custom-font-size2"
+        [placeholder]="'Highlight'"
+        [settings]="dropdownSettings"
+        [data]="fileDataService.markDropdownList"
+        [(ngModel)]="fileDataService.markSelectedItems"
+        (onSelect)="onMarkItemSelect($event)"
+        (onDeSelect)="onMarkItemDeSelect($event)"
+        (onSelectAll)="onMarkSelectAll($event)"
+        (onDeSelectAll)="onMarkDeSelectAll()"
+      >
+      </ng-multiselect-dropdown>
+
       <!-- Search-Bar -->
       <div class="search">
         <input

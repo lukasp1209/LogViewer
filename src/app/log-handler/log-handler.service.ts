@@ -27,4 +27,8 @@ export class LogHandlerService {
   public loadFilterConfig(): Observable<{ [key: string]: any }> {
     return this.http.get<{ [key: string]: any }>('assets/filter-config.json');
   }
+
+  public loadMarkConfig(): Observable<{ [key: string]: string[] }> {
+    return this.http.get<{ [key: string]: string[] }>('assets/mark-config.json');
+  }
 }
