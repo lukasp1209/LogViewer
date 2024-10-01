@@ -15,7 +15,7 @@ import { LogLevelService } from '../log-level/log-level.service';
 import { FileDataService } from 'src/app/FileData/file-data.service';
 import { SearchService } from 'src/app/search/search.service';
 import { HighlightingService } from '../highlight/highlighting.service';
-
+import { ExportService } from '../export/export.service';
 
 @Component({
   selector: 'app-body',
@@ -36,7 +36,8 @@ export class BodyComponent implements OnInit {
     protected logLevelService: LogLevelService,
     protected fileDataService: FileDataService,
     protected searchService: SearchService,
-    protected highlightingService: HighlightingService
+    protected highlightingService: HighlightingService,
+    protected exportService: ExportService
   ) {}
 
   zipFile: File | null = null;
@@ -48,6 +49,7 @@ export class BodyComponent implements OnInit {
   selectedSimpleSearchTerm: string = '';
   showUploadForm: boolean = true;
   fileUploaded: boolean = false;
+  selectedDateTime: Date | null = null;
 
   logLevelToggle: boolean = false;
 
@@ -71,18 +73,10 @@ export class BodyComponent implements OnInit {
     this.logHandlerService.loadMarkConfig().subscribe((config) => {
       this.initializeMarkDropdownList(config);
       this.fileDataService.markSelectedItems = [];
-      this.dropdownSettings = {
-        singleSelection: false,
-        idField: 'item_id',
-        textField: 'item_text',
-        selectAllText: 'Alle markieren',
-        unSelectAllText: 'Alle Markierungen entfernen',
-        itemsShowLimit: 3,
-        allowSearchFilter: true,
-      };
+      this.dropdownSettings;
     });
   }
-  
+
   initializeMarkDropdownList(config: { [key: string]: string[] }) {
     let itemId = 1;
     for (const key in config) {
@@ -90,7 +84,7 @@ export class BodyComponent implements OnInit {
         this.fileDataService.markDropdownList.push({
           item_id: itemId++,
           item_text: key,
-          terms: config[key]
+          terms: config[key],
         });
       }
     }
@@ -106,7 +100,7 @@ export class BodyComponent implements OnInit {
         });
       }
     }
-  }  
+  }
 
   onFileChange(event: any): void {
     const fileList: FileList = event.target.files;
@@ -143,11 +137,7 @@ export class BodyComponent implements OnInit {
           this.fileUploaded = false;
         });
 
-      if (!this.logLevelToggle) {
-        this.undoMarkLogLevel();
-      } else {
-        this.markLogLevel();
-      }
+      this.logLevelProof();
     }
   }
 
@@ -185,99 +175,124 @@ export class BodyComponent implements OnInit {
 
     this.fileDataService.fileContentMap[this.selectedFileName] =
       this.fileDataService.originalFileContentMap[this.selectedFileName];
-  
-    this.fileDataService.selectedItems = this.fileDataService.selectedItems.filter(
-      (i: any) => i.item_id !== item.item_id
-    );
-  
+
+    this.fileDataService.selectedItems =
+      this.fileDataService.selectedItems.filter(
+        (i: any) => i.item_id !== item.item_id
+      );
+
     this.fileDataService.selectedItems.forEach((selectedItem: any) => {
-      const filters = this.logHandlerService.filterConfig[selectedItem.item_text];
+      const filters =
+        this.logHandlerService.filterConfig[selectedItem.item_text];
       if (filters) {
         this.filterService.removeLines(filters, this.selectedFileName);
       }
     });
-  
+
     if (this.fileDataService.selectedItems.length === 0 && this.customWord) {
       this.removeCustomLines();
     }
-  
-    if (!this.logLevelToggle) {
-      this.undoMarkLogLevel();
-    } else {
-      this.markLogLevel();
-    }
+    this.logLevelProof();
   }
-  
 
   onDeSelectAll(): void {
     this.fileDataService.fileContentMap[this.selectedFileName] =
       this.fileDataService.originalFileContentMap[this.selectedFileName];
     this.fileDataService.selectedItems = [];
 
-    if (this.logLevelToggle) {
-      this.markLogLevel();
-    }
+    this.logLevelProof();
   }
 
-  onMarkItemSelect(item: any) {
-    const terms = item.terms;
-  
-    this.highlightingService.highlightLogs(terms, this.selectedFileName);
-  
-    this.fileDataService.fileContentMap[this.selectedFileName] = this.fileDataService.fileContentMap[this.selectedFileName]
-      .split('\n')
-      .filter(line => terms.some((term: string) => line.includes(term)))
-      .join('\n');
-  }
-  
-  onMarkSelectAll(items: any[]) {
-    const allTerms: string[] = [];
-    items.forEach(item => {
-      const terms = item.terms;
-      allTerms.push(...terms);
-      this.highlightingService.highlightLogs(terms, this.selectedFileName);
-    });
-  
-    this.fileDataService.fileContentMap[this.selectedFileName] = this.fileDataService.fileContentMap[this.selectedFileName]
-      .split('\n')
-      .filter(line => allTerms.some(term => line.includes(term)))
-      .join('\n');
-  }
-  
-  onMarkItemDeSelect(item: any): void {
-    this.fileDataService.fileContentMap[this.selectedFileName] = this.fileDataService.originalFileContentMap[this.selectedFileName];
-  
-    this.fileDataService.markSelectedItems.forEach(selectedItem => {
-      const terms = selectedItem.terms;
-      this.highlightingService.highlightLogs(terms, this.selectedFileName);
-    });
-  
-    const remainingTerms = this.fileDataService.markSelectedItems.flatMap(item => item.terms);
-    if (remainingTerms.length > 0) {
-      this.fileDataService.fileContentMap[this.selectedFileName] = this.fileDataService.fileContentMap[this.selectedFileName]
-        .split('\n')
-        .filter(line => remainingTerms.some(term => line.includes(term)))
-        .join('\n');
-    }
-
-    if (!this.logLevelToggle) {
-      this.undoMarkLogLevel();
-    } else {
-      this.markLogLevel();
-    }
-  }
-  
-  onMarkDeSelectAll(): void {
-    this.fileDataService.fileContentMap[this.selectedFileName] = this.fileDataService.originalFileContentMap[this.selectedFileName];
-
-    if (this.logLevelToggle) {
-      this.markLogLevel();
-    }
-  }
-  
   highlightLogs(): void {
-    const selectedTerms = this.fileDataService.selectedItems.map((item: any) => item.item_text);
-    this.highlightingService.highlightLogs(selectedTerms, this.selectedFileName);
+    const selectedTopics = this.fileDataService.selectedTopics;
+    const fileName = this.selectedFileName;
+
+    if (selectedTopics && selectedTopics.length > 0 && fileName) {
+      this.highlightingService.highlightLogs(selectedTopics, fileName);
+    } else {
+      console.error('Kein Thema oder Dateiname ausgewählt.');
+    }
+
+    this.logLevelProof();
+  }
+
+  onMarkSelectAll(): void {
+    const allItems = Object.keys(this.logHandlerService.markConfig);
+
+    this.fileDataService.markSelectedItems = allItems.map((item) => ({
+      item_text: item,
+      terms: this.logHandlerService.markConfig[item] || [],
+    }));
+
+    const fileName = this.selectedFileName;
+    if (fileName) {
+      this.fileDataService.fileContentMap[fileName] =
+        this.fileDataService.originalFileContentMap[fileName];
+
+      this.highlightingService.highlightLogs(allItems, fileName);
+
+      this.fileDataService.fileContentMap[fileName] =
+        this.fileDataService.fileContentMap[fileName]
+          .split('\n')
+          .filter((line) =>
+            allItems.some((term) =>
+              line.toLowerCase().includes(term.toLowerCase())
+            )
+          )
+          .join('\n');
+
+      this.logLevelProof();
+    }
+  }
+
+  onMarkDeSelectAll(): void {
+    const fileName = this.selectedFileName;
+
+    if (fileName) {
+      this.fileDataService.fileContentMap[fileName] =
+        this.fileDataService.originalFileContentMap[fileName];
+
+      this.fileDataService.markSelectedItems = [];
+
+      this.logLevelProof();
+    }
+  }
+
+  onDropdownChange(): void {
+    const selectedItems = this.fileDataService.markSelectedItems;
+    const fileName = this.selectedFileName;
+
+    if (!fileName) {
+      return;
+    }
+
+    const allTerms: string[] = selectedItems.flatMap(
+      (item) => this.logHandlerService.markConfig[item.item_text] || []
+    );
+
+    this.fileDataService.fileContentMap[fileName] =
+      this.fileDataService.originalFileContentMap[fileName];
+
+    if (selectedItems && selectedItems.length > 0) {
+      this.highlightingService.highlightLogs(
+        selectedItems.map((item) => item.item_text),
+        fileName
+      );
+
+      this.fileDataService.fileContentMap[fileName] =
+        this.fileDataService.fileContentMap[fileName]
+          .split('\n')
+          .filter((line) =>
+            allTerms.some((term) =>
+              line.toLowerCase().includes(term.toLowerCase())
+            )
+          )
+          .join('\n');
+    } else {
+      this.fileDataService.fileContentMap[fileName] =
+        this.fileDataService.originalFileContentMap[fileName];
+    }
+    this.logLevelProof();
   }
 
   removeCustomLines(): void {
@@ -310,18 +325,6 @@ export class BodyComponent implements OnInit {
     this.customWord = '';
   }
 
-  markTerms(terms: string[]) {
-    let content =
-      this.fileDataService.originalFileContentMap[this.selectedFileName];
-    if (!content) return;
-
-    terms.forEach((term) => {
-      content = this.searchService.highlightTerm(content, term);
-    });
-
-    this.fileDataService.fileContentMap[this.selectedFileName] = content;
-  }
-
   markLogLevel(): void {
     if (
       this.selectedFileName &&
@@ -335,6 +338,7 @@ export class BodyComponent implements OnInit {
       console.log(this.fileDataService.fileContentMap[this.selectedFileName]);
     }
   }
+
   onLogLevelToggleChange(): void {
     if (!this.logHandlerService.buttonStates.LogLevel) {
       this.undoMarkLogLevel();
@@ -342,6 +346,14 @@ export class BodyComponent implements OnInit {
     } else {
       this.markLogLevel();
       this.logLevelToggle = true;
+    }
+  }
+
+   logLevelProof() {
+    if (!this.logLevelToggle) {
+      this.undoMarkLogLevel();
+    } else {
+      this.markLogLevel();
     }
   }
 
@@ -365,13 +377,18 @@ export class BodyComponent implements OnInit {
 
   search(): void {
     this.searchService.search(this.searchQuery, this.selectedFileName);
-    this.markLogLevel();
 
-    if (!this.logLevelToggle) {
-      this.undoMarkLogLevel();
-    } else {
-      this.markLogLevel();
-    }
+    this.logLevelProof();
   }
-  
+
+  filterDateLogs(): void {
+    this.filterService.filterLogsByDateTime(
+      this.selectedDateTime,
+      this.selectedFileName
+    );
+  }
+
+  exportCurrentContent(): void {
+    this.exportService.exportFile('content', 'FilteredLogs');
+  }
 }

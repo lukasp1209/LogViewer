@@ -1,9 +1,12 @@
 {
-    "Wlan": ["WlanManager", "WlanStatus"],
-    "Bluetooth": ["bluetooth", "Bluetooth"],
-    "Engine": ["Engine"],
-    "Drucken" : ["print"],
-    "Spam": [ "Database", "Achtung", "CheckError", "CheckErrorExist", "SCardEstablishContext", "NIDA ID in Finish Refresh", "FieldMapper.ReadXML", "GetStatusChange", "MessageStateMachine", "ZipIt.Unzip"],
-	"Test" : ["2022"]
-  }
-  
+  "Wlan": ["WlanManager", "WlanStatus"],
+  "Bluetooth": ["Bluetooth"],
+  "Engine": ["Engine"],
+  "Drucken": ["print"],
+  "Einsatzerstellung": ["Generating"],
+  "Einsatzabschluss": ["cmd="],
+  "Info" : ["Info"],
+  "Warn" : ["Warn"],
+  "Error" : ["Error"],
+  "Fatal" : ["Fatal"]
+}

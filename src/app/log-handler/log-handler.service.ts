@@ -13,15 +13,21 @@ export class LogHandlerService {
     LogLevel: false,
   };
   filterConfig: { [key: string]: any };
+  markConfig: { [key: string]: any };
 
   constructor(private filterService: FilterService, private http: HttpClient) {
     this.selectedFileName = '';
     this.fileContentMap = {};
     this.filterConfig = {};
+    this.markConfig = {};
 
     this.loadFilterConfig().subscribe(config => {
       this.filterConfig = config;
     });
+
+    this.loadMarkConfig().subscribe(config => {
+      this.markConfig = config;
+    })
   }
 
   public loadFilterConfig(): Observable<{ [key: string]: any }> {

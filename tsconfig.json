@@ -5,6 +5,7 @@
     "resolveJsonModule": true,
     "baseUrl": "./",
     "outDir": "./dist/out-tsc",
+    "typeRoots": ["node_modules/@types"],
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "noImplicitOverride": true,

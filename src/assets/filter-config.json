@@ -5,5 +5,9 @@
   "Drucken" : ["print"],
   "Spam": [ "Database", "Achtung", "CheckError", "CheckErrorExist", "SCardEstablishContext", "NIDA ID in Finish Refresh", "FieldMapper.ReadXML", "GetStatusChange", "MessageStateMachine", "ZipIt.Unzip"],
   "Einsatzerstellung" : ["Generating"],
-  "Einsatzabschluss" : ["cmd="]
+  "Einsatzabschluss" : ["cmd="],
+  "Info" : ["Info"],
+  "Warn" : ["Warn"],
+  "Error" : ["Error"],
+  "Fatal" : ["Fatal"]
 }

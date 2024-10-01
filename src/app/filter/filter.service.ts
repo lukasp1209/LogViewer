@@ -32,6 +32,10 @@ export class FilterService {
             )
         )
         .join('\n');
+    } else {
+      console.warn(
+        'Keine benutzerdefinierten Wörter eingegeben. Die Zeilen werden nicht entfernt.'
+      );
     }
   }
 
@@ -57,5 +61,33 @@ export class FilterService {
           (item: any) => item.item_text !== customWord
         );
     }
+  }
+
+  filterLogsByDateTime(
+    selectedDateTime: Date | null,
+    selectedFileName: string
+  ): void {
+    if (!selectedFileName || !selectedDateTime) {
+      return;
+    }
+
+    const dateString = selectedDateTime.toISOString().split('T')[0];
+    const timeString = selectedDateTime.toTimeString().split(' ')[0];
+    const originalContent =
+      this.fileDataService.originalFileContentMap[selectedFileName];
+
+    if (!originalContent) {
+      return;
+    }
+
+    const lines = originalContent.split('\n');
+
+    this.fileDataService.hiddenLinesMap[selectedFileName] = lines.filter(
+      (line) => !line.includes(dateString) || !line.includes(timeString)
+    );
+
+    this.fileDataService.fileContentMap[selectedFileName] = lines
+      .filter((line) => line.includes(dateString) && line.includes(timeString))
+      .join('\n');
   }
 }

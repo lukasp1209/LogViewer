@@ -12,6 +12,7 @@ export class FileDataService {
 
   markDropdownList: any[] = [];
   markSelectedItems: any[] = [];
+  selectedTopics: any;
 }
 
 
