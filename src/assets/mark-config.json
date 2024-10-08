@@ -1,4 +1,5 @@
 {
+  "NIDA Start/Version" : ["NIDA started"],
   "Wlan": ["WlanManager", "WlanStatus"],
   "Bluetooth": ["Bluetooth"],
   "Engine": ["Engine"],
@@ -8,5 +9,9 @@
   "Info" : ["Info"],
   "Warn" : ["Warn"],
   "Error" : ["Error"],
-  "Fatal" : ["Fatal"]
+  "Fatal" : ["Fatal"],
+  "Benutzer Reset" : ["Neustart durch den Benutzer"],
+  "Einsatzerstellung" : ["Generating"],
+  "Einsatzabschluss" : ["removing silent record!"],
+  "Einsatz manuell gelöscht" : ["Engine.record_do_action: removing record!"]
 }

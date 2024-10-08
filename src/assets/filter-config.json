@@ -1,13 +1,12 @@
 {
+  "NIDA Start/Version" : ["NIDA started"],
   "Wlan": ["WlanManager", "WlanStatus"],
   "Bluetooth": ["bluetooth", "Bluetooth"],
   "Engine": ["Engine"],
   "Drucken" : ["print"],
   "Spam": [ "Database", "Achtung", "CheckError", "CheckErrorExist", "SCardEstablishContext", "NIDA ID in Finish Refresh", "FieldMapper.ReadXML", "GetStatusChange", "MessageStateMachine", "ZipIt.Unzip"],
+  "Benutzer Reset" : ["Neustart durch den Benutzer"],
   "Einsatzerstellung" : ["Generating"],
-  "Einsatzabschluss" : ["cmd="],
-  "Info" : ["Info"],
-  "Warn" : ["Warn"],
-  "Error" : ["Error"],
-  "Fatal" : ["Fatal"]
+  "Einsatzabschluss" : ["removing silent record!"],
+  "Einsatz manuell gelöscht" : ["Engine.record_do_action: removing record!"]
 }

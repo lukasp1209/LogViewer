@@ -1,5 +1,3 @@
-<!-- body.component.html -->
-
 <!-- File upload section -->
 <div>
   <input
@@ -24,7 +22,7 @@
   </ul>
 
   <!-- Navigation bar -->
-  <nav class="navbar navbar-expand-lg navbar-light bg-light py-3 shadow-sm">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container-fluid">
       <button
         class="navbar-toggler"
@@ -51,9 +49,11 @@
               </option>
             </select>
           </li>
-          <div class="filter">
+
+          <!-- Filter input and button grouped together -->
+          <div class="filter d-flex align-items-center ml-3">
             <input
-              class="form-control form-control-sm"
+              class="form-control form-control-sm mr-2"
               type="text"
               id="customWord"
               [(ngModel)]="customWord"
@@ -67,28 +67,6 @@
               Filtern
             </button>
           </div>
-
-          <div class="input-group">
-            <input
-              type="datetime-local"
-              class="form-control"
-              [(ngModel)]="selectedDateTime"
-              placeholder="Wählen Sie Datum und Uhrzeit"
-            />
-            <div class="input-group-append">
-              <button
-                class="btn btn-secondary"
-                type="button"
-                (click)="filterDateLogs()"
-              >
-                Datum
-              </button>
-            </div>
-          </div>
-
-          <button class="btn btn-secondary" (click)="exportCurrentContent()">
-            Export
-          </button>
 
           <!-- Log level toggle -->
           <div class="form-check form-switch ml-3">
@@ -107,6 +85,7 @@
           </div>
         </ul>
 
+        <!-- Multi-select Dropdowns -->
         <ng-multiselect-dropdown
           class="custom-font-size ml-3"
           [placeholder]="'Filter'"
@@ -134,7 +113,7 @@
         </ng-multiselect-dropdown>
 
         <!-- Search-Bar -->
-        <div class="search">
+        <div class="search d-flex align-items-center ml-3">
           <input
             class="form-control"
             type="text"
@@ -148,7 +127,6 @@
     </div>
   </nav>
 
-  <!-- Content display area -->
   <div class="content" [attr.has-content]="selectedFileName ? 'true' : 'false'">
     <pre
       #markedContentElement
@@ -157,6 +135,5 @@
     ></pre>
   </div>
 
-  <!-- Template for no files loaded -->
   <ng-template #noFilesLoaded> </ng-template>
 </div>

@@ -12,14 +12,12 @@ import { NgMultiSelectDropDownModule } from 'ng-multiselect-dropdown';
 import { MatSelectModule } from '@angular/material/select';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import { HttpClientModule } from '@angular/common/http';
-
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { DxDataGridModule } from 'devextreme-angular';
 
 @NgModule({
-  declarations: [
-    AppComponent,
-    HeaderComponent,
-    BodyComponent,
-  ],
+  declarations: [AppComponent, HeaderComponent, BodyComponent],
   imports: [
     BrowserModule,
     AppRoutingModule,
@@ -29,10 +27,12 @@ import { HttpClientModule } from '@angular/common/http';
     NgMultiSelectDropDownModule,
     NgxMatSelectSearchModule,
     MatSelectModule,
-    HttpClientModule
+    HttpClientModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    DxDataGridModule,
   ],
   providers: [],
-  bootstrap: [AppComponent], 
+  bootstrap: [AppComponent],
 })
-export class AppModule {
-}
+export class AppModule {}

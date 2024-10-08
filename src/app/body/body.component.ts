@@ -50,6 +50,16 @@ export class BodyComponent implements OnInit {
   showUploadForm: boolean = true;
   fileUploaded: boolean = false;
   selectedDateTime: Date | null = null;
+  startDate: string = '';
+  endDate: string = '';
+  logData: { date: string; time: string; logLevel: string; message: string }[] =
+    [];
+  filteredLogs: Array<{
+    date: string;
+    time: string;
+    level: string;
+    message: string;
+  }> = [];
 
   logLevelToggle: boolean = false;
 
@@ -110,6 +120,9 @@ export class BodyComponent implements OnInit {
       document.title = `${this.zipFile.name}`;
       this.zipContents = [];
       const zip = new JSZip();
+
+      this.resetDropdownItems();
+
       zip
         .loadAsync(this.zipFile)
         .then((zipData) => {
@@ -139,6 +152,18 @@ export class BodyComponent implements OnInit {
 
       this.logLevelProof();
     }
+  }
+
+  resetDropdownItems(): void {
+    this.fileDataService.selectedItems = [];
+    this.fileDataService.markSelectedItems = [];
+
+    if (this.selectedFileName) {
+      this.fileDataService.fileContentMap[this.selectedFileName] =
+        this.fileDataService.originalFileContentMap[this.selectedFileName];
+    }
+
+    this.logLevelProof();
   }
 
   markedContent(fileName: string): string {
@@ -349,7 +374,7 @@ export class BodyComponent implements OnInit {
     }
   }
 
-   logLevelProof() {
+  logLevelProof() {
     if (!this.logLevelToggle) {
       this.undoMarkLogLevel();
     } else {
@@ -377,17 +402,20 @@ export class BodyComponent implements OnInit {
 
   search(): void {
     this.searchService.search(this.searchQuery, this.selectedFileName);
-
-    this.logLevelProof();
   }
 
-  filterDateLogs(): void {
-    this.filterService.filterLogsByDateTime(
-      this.selectedDateTime,
-      this.selectedFileName
-    );
+  filterLogs(originalLogs: string[]): void {
+    this.filteredLogs = originalLogs.map((log) => {
+      const [date, time, level, ...messageParts] = log.split(' ');
+      const message = messageParts.join(' ');
+      return {
+        date,
+        time,
+        level,
+        message,
+      };
+    });
   }
-
   exportCurrentContent(): void {
     this.exportService.exportFile('content', 'FilteredLogs');
   }
