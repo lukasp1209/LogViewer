@@ -24,7 +24,10 @@
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": ["src/favicon.ico", "src/assets"],
-            "styles": ["src/styles.scss"],
+            "styles": [
+              "node_modules/devextreme/dist/css/dx.light.css",
+              "src/styles.scss"
+            ],
             "scripts": ["./node_modules/hammerjs/hammer.min.js"],
             "stylePreprocessorOptions": {
               "includePaths": ["node_modules"]

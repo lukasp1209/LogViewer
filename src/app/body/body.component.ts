@@ -66,48 +66,51 @@ export class BodyComponent implements OnInit {
   dropdownSettings: IDropdownSettings = {};
 
   ngOnInit() {
+    this.initializeDropdownSettings();
+
     this.logHandlerService.loadFilterConfig().subscribe((config) => {
-      this.initializeFilterDropdownList(config);
       this.fileDataService.selectedItems = [];
-      this.dropdownSettings = {
-        singleSelection: false,
-        idField: 'item_id',
-        textField: 'item_text',
-        selectAllText: 'Alles auswählen',
-        unSelectAllText: 'Alles entfernen',
-        itemsShowLimit: 3,
-        allowSearchFilter: true,
-      };
+      this.initializeDropdownList(config, this.fileDataService.dropdownList);
     });
 
     this.logHandlerService.loadMarkConfig().subscribe((config) => {
-      this.initializeMarkDropdownList(config);
       this.fileDataService.markSelectedItems = [];
-      this.dropdownSettings;
+      this.initializeDropdownList(
+        config,
+        this.fileDataService.markDropdownList,
+        true
+      );
     });
   }
 
-  initializeMarkDropdownList(config: { [key: string]: string[] }) {
-    let itemId = 1;
-    for (const key in config) {
-      if (config.hasOwnProperty(key)) {
-        this.fileDataService.markDropdownList.push({
-          item_id: itemId++,
-          item_text: key,
-          terms: config[key],
-        });
-      }
-    }
+  private initializeDropdownSettings(): void {
+    this.dropdownSettings = {
+      singleSelection: false,
+      idField: 'item_id',
+      textField: 'item_text',
+      selectAllText: 'Alles auswählen',
+      unSelectAllText: 'Alles entfernen',
+      itemsShowLimit: 3,
+      allowSearchFilter: true,
+    };
   }
 
-  initializeFilterDropdownList(config: { [key: string]: any }) {
+  private initializeDropdownList(
+    config: { [key: string]: any },
+    targetList: any[],
+    includeTerms: boolean = false
+  ): void {
     let itemId = 1;
     for (const key in config) {
       if (config.hasOwnProperty(key)) {
-        this.fileDataService.dropdownList.push({
+        const item: any = {
           item_id: itemId++,
           item_text: key,
-        });
+        };
+        if (includeTerms) {
+          item.terms = config[key];
+        }
+        targetList.push(item);
       }
     }
   }
@@ -406,16 +409,13 @@ export class BodyComponent implements OnInit {
 
   filterLogs(originalLogs: string[]): void {
     this.filteredLogs = originalLogs.map((log) => {
-      const [date, time, level, ...messageParts] = log.split(' ');
-      const message = messageParts.join(' ');
-      return {
-        date,
-        time,
-        level,
-        message,
-      };
+      const [date, time, levelWithMessage] = log.split(' ', 3);
+      const level = levelWithMessage.replace(/[\[\]:]/g, '');
+      const message = log.split(': ').slice(1).join(': ');
+      return { date, time, level, message };
     });
   }
+
   exportCurrentContent(): void {
     this.exportService.exportFile('content', 'FilteredLogs');
   }

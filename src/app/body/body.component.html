@@ -127,6 +127,7 @@
     </div>
   </nav>
 
+  <!-- show Content -->
   <div class="content" [attr.has-content]="selectedFileName ? 'true' : 'false'">
     <pre
       #markedContentElement
@@ -134,6 +135,5 @@
       [innerHTML]="markedContent(selectedFileName)"
     ></pre>
   </div>
-
   <ng-template #noFilesLoaded> </ng-template>
 </div>
