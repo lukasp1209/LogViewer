@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Log } from '../LogConverter/logconverter.service';
 
 @Injectable({
   providedIn: 'root',
@@ -14,5 +15,3 @@ export class FileDataService {
   markSelectedItems: any[] = [];
   selectedTopics: any;
 }
-
-

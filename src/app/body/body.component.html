@@ -18,116 +18,42 @@
       >
         <p>{{ zipFile?.name }}</p>
       </a>
+      <select
+        class="btn btn-secondary dropdown-toggle"
+        id="dropdownMenuButton"
+        [(ngModel)]="selectedFileName"
+      >
+        <option value="" disabled>Log auswählen</option>
+        <option *ngFor="let file of zipContents" [value]="file.name">
+          {{ file.name | slice : file.name.lastIndexOf("/") + 1 }}
+        </option>
+      </select>
     </li>
   </ul>
 
-  <!-- Navigation bar -->
-  <nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <div class="container-fluid">
-      <button
-        class="navbar-toggler"
-        type="button"
-        data-toggle="collapse"
-        data-target="#navbarNavDropdown"
-        aria-controls="navbarNavDropdown"
-        aria-expanded="false"
-        aria-label="Toggle navigation"
-      >
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNavDropdown">
-        <ul class="navbar-nav d-flex flex-row align-items-center">
-          <li class="nav-item">
-            <select
-              class="btn btn-secondary dropdown-toggle"
-              id="dropdownMenuButton"
-              [(ngModel)]="selectedFileName"
-            >
-              <option value="" disabled>Log auswählen</option>
-              <option *ngFor="let file of zipContents" [value]="file.name">
-                {{ file.name | slice : file.name.lastIndexOf("/") + 1 }}
-              </option>
-            </select>
-          </li>
+  <dx-data-grid
+    [dataSource]="logs"
+    keyExpr="Uhrzeit"
+    [width]="'100%'"
+    [height]="600"
+    [showBorders]="false"
+  >
+    <dxo-filter-row [visible]="true"></dxo-filter-row>
+    <dxo-search-panel [visible]="true"></dxo-search-panel>
+    <dxo-scrolling mode="virtual"></dxo-scrolling>
+    <dxo-group-panel [visible]="true"></dxo-group-panel>
+    <dxo-grouping [autoExpandAll]="false"></dxo-grouping>
 
-          <!-- Filter input and button grouped together -->
-          <div class="filter d-flex align-items-center ml-3">
-            <input
-              class="form-control form-control-sm mr-2"
-              type="text"
-              id="customWord"
-              [(ngModel)]="customWord"
-              placeholder="Erstelle Filter"
-            />
-            <button
-              type="button"
-              class="btn btn-secondary"
-              (click)="removeCustomLines()"
-            >
-              Filtern
-            </button>
-          </div>
-
-          <!-- Log level toggle -->
-          <div class="form-check form-switch ml-3">
-            <input
-              class="form-check-input"
-              type="checkbox"
-              role="switch"
-              id="flexSwitchCheckChecked"
-              checked
-              [(ngModel)]="logHandlerService.buttonStates.LogLevel"
-              (change)="onLogLevelToggleChange()"
-            />
-            <label class="form-check-label" for="flexSwitchCheckChecked"
-              >LogLevel</label
-            >
-          </div>
-        </ul>
-
-        <!-- Multi-select Dropdowns -->
-        <ng-multiselect-dropdown
-          class="custom-font-size ml-3"
-          [placeholder]="'Filter'"
-          [settings]="dropdownSettings"
-          [data]="fileDataService.dropdownList"
-          [(ngModel)]="fileDataService.selectedItems"
-          (onSelect)="onItemSelect($event)"
-          (onDeSelect)="onItemDeSelect($event)"
-          (onSelectAll)="onSelectAll($event)"
-          (onDeSelectAll)="onDeSelectAll()"
-        >
-        </ng-multiselect-dropdown>
-
-        <ng-multiselect-dropdown
-          class="custom-font-size2 ml-3"
-          [placeholder]="'Highlight'"
-          [settings]="dropdownSettings"
-          [data]="fileDataService.markDropdownList"
-          [(ngModel)]="fileDataService.markSelectedItems"
-          (onSelect)="onDropdownChange()"
-          (onDeSelect)="onDropdownChange()"
-          (onSelectAll)="onMarkSelectAll()"
-          (onDeSelectAll)="onMarkDeSelectAll()"
-        >
-        </ng-multiselect-dropdown>
-
-        <!-- Search-Bar -->
-        <div class="search d-flex align-items-center ml-3">
-          <input
-            class="form-control"
-            type="text"
-            id="searchInput"
-            [(ngModel)]="searchQuery"
-            (input)="search()"
-            placeholder="Suche"
-          />
-        </div>
-      </div>
-    </div>
-  </nav>
+    <dxi-column dataField="Datum" dataType="date"> </dxi-column>
+    <dxi-column dataField="Uhrzeit" dataType="datetime"> </dxi-column>
+    <dxi-column dataField="Loglevel" dataType="string"> </dxi-column>
+    <dxi-column dataField="Quelle" dataType="string"> </dxi-column>
+    <dxi-column dataField="Nachricht" dataType="string"> </dxi-column>
+    <dxi-column dataField="Thema" dataType="string"> </dxi-column>
+  </dx-data-grid>
 
   <!-- show Content -->
+  '
   <div class="content" [attr.has-content]="selectedFileName ? 'true' : 'false'">
     <pre
       #markedContentElement

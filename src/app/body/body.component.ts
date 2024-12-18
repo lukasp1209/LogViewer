@@ -16,6 +16,7 @@ import { FileDataService } from 'src/app/FileData/file-data.service';
 import { SearchService } from 'src/app/search/search.service';
 import { HighlightingService } from '../highlight/highlighting.service';
 import { ExportService } from '../export/export.service';
+import { Log, LogConverterService } from '../LogConverter/logconverter.service';
 
 @Component({
   selector: 'app-body',
@@ -37,8 +38,13 @@ export class BodyComponent implements OnInit {
     protected fileDataService: FileDataService,
     protected searchService: SearchService,
     protected highlightingService: HighlightingService,
-    protected exportService: ExportService
-  ) {}
+    protected exportService: ExportService,
+    protected logConverter: LogConverterService
+  ) {
+    this.logs = logConverter.getLogs();
+  }
+
+  logs: Log[] = [];
 
   zipFile: File | null = null;
   zipContents: Array<File> = [];
@@ -135,8 +141,13 @@ export class BodyComponent implements OnInit {
               zipData.files[fileName].async('text').then((text) => {
                 const file = new File([new Blob([text])], fileName);
                 txtFiles.push(file);
-                this.fileDataService.fileContentMap[fileName] = text;
+
                 this.fileDataService.originalFileContentMap[fileName] = text;
+
+                const formattedLogs = this.logConverter.parseLogs(text);
+                this.fileDataService.fileContentMap[fileName] = formattedLogs;
+
+                console.log(`Formatted Logs for ${fileName}:`, formattedLogs);
               });
             }
           });
