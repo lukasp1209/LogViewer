@@ -48,6 +48,7 @@
     "@igniteui/angular-schematics": "~16.0.1200",
     "@types/hammerjs": "^2.0.40",
     "@types/jasmine": "~4.3.0",
+    "@types/jquery": "^3.5.32",
     "@types/jspdf": "^2.0.0",
     "jasmine-core": "~4.6.0",
     "karma": "~6.4.0",

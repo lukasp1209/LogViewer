@@ -32,34 +32,37 @@
   </ul>
 
   <dx-data-grid
-    [dataSource]="logs"
-    keyExpr="Uhrzeit"
+    [dataSource]="logsDataSource"
+    [columns]="['Datum', 'Uhrzeit', 'Loglevel', 'Nachricht', 'Thema']"
+    [allowColumnResizing]="true"
+    [columnAutoWidth]="true"
+    keyExpr="Datum"
     [width]="'100%'"
-    [height]="600"
-    [showBorders]="false"
+    [height]="700"
+    [showBorders]="true"
   >
     <dxo-filter-row [visible]="true"></dxo-filter-row>
     <dxo-search-panel [visible]="true"></dxo-search-panel>
     <dxo-scrolling mode="virtual"></dxo-scrolling>
     <dxo-group-panel [visible]="true"></dxo-group-panel>
-    <dxo-grouping [autoExpandAll]="false"></dxo-grouping>
+    <dxo-header-filter [visible]="true"></dxo-header-filter>
 
-    <dxi-column dataField="Datum" dataType="date"> </dxi-column>
-    <dxi-column dataField="Uhrzeit" dataType="datetime"> </dxi-column>
+    <dxi-column dataField="Datum" dataType="date" format="dd.MM.yyyy">
+    </dxi-column>
+    <dxi-column dataField="Uhrzeit"> </dxi-column>
     <dxi-column dataField="Loglevel" dataType="string"> </dxi-column>
-    <dxi-column dataField="Quelle" dataType="string"> </dxi-column>
     <dxi-column dataField="Nachricht" dataType="string"> </dxi-column>
     <dxi-column dataField="Thema" dataType="string"> </dxi-column>
   </dx-data-grid>
 
   <!-- show Content -->
   '
-  <div class="content" [attr.has-content]="selectedFileName ? 'true' : 'false'">
+  <!-- <div class="content" [attr.has-content]="selectedFileName ? 'true' : 'false'">
     <pre
       #markedContentElement
       class="scrollable-content"
       [innerHTML]="markedContent(selectedFileName)"
     ></pre>
-  </div>
+  </div> -->
   <ng-template #noFilesLoaded> </ng-template>
 </div>

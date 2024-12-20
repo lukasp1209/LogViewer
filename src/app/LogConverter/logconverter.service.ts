@@ -4,40 +4,11 @@ export interface Log {
   Datum: string;
   Uhrzeit: string;
   Loglevel: string;
-  Quelle: string;
   Nachricht: string;
   Thema: string;
 }
 
-const logs: Log[] = [
-  {
-    Datum: '2024.12.24',
-    Uhrzeit: '21:00:00',
-    Loglevel: 'Fatal',
-    Quelle: 'LogConfigurationService',
-    Nachricht:
-      'Log configuration has been applied. Current minimum log level is Information',
-    Thema: 'wlan',
-  },
-  {
-    Datum: '2024.11.20',
-    Uhrzeit: '21:10:00',
-    Loglevel: 'Fatal',
-    Quelle: 'LogConfigurationService',
-    Nachricht:
-      'Log configuration has been applied. Current minimum log level is Information',
-    Thema: 'wlan',
-  },
-  {
-    Datum: '2020.07.24',
-    Uhrzeit: '01:00:00',
-    Loglevel: 'Info',
-    Quelle: 'DatabaseManager',
-    Nachricht:
-      'Log configuration has been applied. Current minimum log level is Information',
-    Thema: 'wlan',
-  },
-];
+const logs: Log[] = [];
 
 @Injectable({
   providedIn: 'root',
@@ -47,28 +18,39 @@ export class LogConverterService {
     return logs;
   }
 
-  parseLogs(content: string): Log[] {
-    const logLines = content.split('\n');
-    const formattedLogs: Log[] = logLines
-      .map((line) => this.parseLogLine(line))
-      .filter((log) => log !== null);
-    return formattedLogs;
-  }
-  private parseLogLine(line: string): Log | null {
-    const logPattern =
-      /(?<Datum>\d{4}[-.]\d{2}[-.]\d{2})\s+(?<Uhrzeit>\d{2}:\d{2}:\d{2}(?:\.\d{3})?)\s+\[(?<Loglevel>\w+)]\s+(?<Quelle>[^\s]+)\s+(?<Nachricht>.+)/;
-    const match = line.match(logPattern);
+  parseLogs(logContent: string): Log[] {
+    const logLines = logContent
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line !== '');
 
-    if (match && match.groups) {
-      return {
-        Datum: match.groups['Datum'].replace(/-/g, '.'),
-        Uhrzeit: match.groups['Uhrzeit'],
-        Loglevel: match.groups['Loglevel'],
-        Quelle: match.groups['Quelle'],
-        Nachricht: match.groups['Nachricht'],
-        Thema: '',
-      };
+    const parsedLogs: Log[] = [];
+    const logRegex =
+      /(\d{4}[-.]\d{2}[-.]\d{2}|\d{2}[-.]\d{2}[-.]\d{4})[ \t]+(\d{2}:\d{2}:\d{2})\s+(\[?(Info|Warn|Error|Fatal)]?)?\s*(.+)?/;
+
+    logLines.forEach((line) => {
+      const match = logRegex.exec(line);
+
+      if (match) {
+        const [_, date, time, logLevel = '', source = '', message = ''] = match;
+        parsedLogs.push({
+          Datum: this.formatDate(date),
+          Uhrzeit: time,
+          Loglevel: logLevel.replace(/[\[\]]/g, '') || '',
+          Nachricht: message.trim(),
+          Thema: source || '',
+        });
+      }
+    });
+
+    return parsedLogs;
+  }
+
+  formatDate(date: string): string {
+    if (date.includes('-')) {
+      return date.replace(/-/g, '.');
     }
-    return null;
+    const parts = date.split('.');
+    return `${parts[2]}.${parts[1]}.${parts[0]}`;
   }
 }
