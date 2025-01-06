@@ -40,8 +40,9 @@ export class BodyComponent {
   fileUploaded: boolean = false;
   logData: { date: string; time: string; logLevel: string; message: string }[] =
     [];
+  fileLogsMap: { [key: string]: Log[] } = {};
 
-  onFileChange(event: any): void {
+  loadFiles(event: any): void {
     const fileList: FileList = event.target.files;
     if (fileList.length > 0) {
       this.fileUploaded = false;
@@ -64,6 +65,8 @@ export class BodyComponent {
 
                 const parsedLogs = this.logConverter.parseLogs(text);
                 logs.push(...parsedLogs);
+
+                this.fileLogsMap[fileName] = this.logConverter.parseLogs(text);
 
                 this.updateGridData(logs);
               });
@@ -91,15 +94,20 @@ export class BodyComponent {
     this.logsDataSource = logs;
   }
 
-  onDropdownChange(): void {
-    const selectedItems = this.fileDataService.markSelectedItems;
-    const fileName = this.selectedFileName;
-
-    if (!fileName) {
-      return;
+  onFileSelectionChange(selectedFile: string): void {
+    if (selectedFile && this.fileLogsMap[selectedFile]) {
+      this.logsDataSource = this.fileLogsMap[selectedFile];
+    } else {
+      this.logsDataSource = [];
     }
+    this.resetGridFilters();
+  }
 
-    this.fileDataService.fileContentMap[fileName] =
-      this.fileDataService.originalFileContentMap[fileName];
+  resetGridFilters(): void {
+    const gridInstance = (document.querySelector('dx-data-grid') as any)
+      ?.instance;
+    if (gridInstance) {
+      gridInstance.clearFilter();
+    }
   }
 }
