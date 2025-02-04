@@ -1,17 +1,25 @@
 header {
-    background-color: white;
-    text-align: left;
-    font-family: Arial, Helvetica, sans-serif;
-    
+  background-color: white;
+  font-family: Arial, Helvetica, sans-serif;
+  padding: 10px 20px;
+}
+
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-size: 24px;
+  margin: 0;
 }
 
 .logo {
   height: 60px;
-  margin-top: 10px;
-  margin-bottom: 16px;
-  margin-right: 60px;
   filter: grayscale(100%);
   transition: filter 0.2s;
+  cursor: pointer;
 }
 
 .logo:hover {
@@ -19,20 +27,22 @@ header {
 }
 
 ul {
-    list-style-type: none;
-    overflow: hidden;
-    background-color: #9c9ca0;
-  }
- 
-  li {
-    float: left;
-    display: inline;
-  }
-  
-  li a {
-    display: block;
-    color: white;
-    text-align: center;
-    padding: 14px 16px;
-    text-decoration: none;
-  }
+  list-style-type: none;
+  overflow: hidden;
+  background-color: #9c9ca0;
+  margin: 0;
+  padding: 0;
+}
+
+li {
+  float: left;
+  display: inline;
+}
+
+li a {
+  display: block;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+}

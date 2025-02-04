@@ -35,15 +35,23 @@ export class LogConverterService {
 
     const parsedLogs: Log[] = [];
     const logRegex =
-      /(\d{4}[-.]\d{2}[-.]\d{2}|\d{2}[-.]\d{2}[-.]\d{4})[ \t]+(\d{2}:\d{2}:\d{2}(?:\.\d{1,4})?)\s*(\[?(Info|Warn|Error|Fatal|FTL)?\]?)[ \t]*([\w\s:.,-]*)?:?[ \t]*(.*)?/;
+      /(\d{4}[-.]\d{2}[-.]\d{2}|\d{2}[-.]\d{2}[-.]\d{4})[ \t]+(\d{2}:\d{2}:\d{2}(?:\.\d{1,4})?)[ \t]*(\[?(Info|Warn|Error|Fatal|INF|WRN|ERR|FTL)?\]?)?:?[ \t]*(.*)/;
 
     logLines.forEach((line) => {
       const match = logRegex.exec(line);
 
       if (match) {
-        const [_, date, time, logLevel = '', source = '', message = ''] = match;
+        const [
+          _,
+          date,
+          timeWithTicks,
+          logLevel = '',
+          source = '',
+          message = '',
+        ] = match;
         const cleanedMessage = message.trim();
         const thema = this.determineThema(source, cleanedMessage);
+        const time = timeWithTicks.split('.')[0];
 
         parsedLogs.push({
           Datum: this.formatDate(date),
