@@ -28,40 +28,43 @@ export class LogConverterService {
   }
 
   parseLogs(logContent: string): Log[] {
-    const logLines = logContent
-      .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => line !== '');
+    const logLines = logContent.split('\n').map((line) => line.trim());
 
     const parsedLogs: Log[] = [];
     const logRegex =
-      /(\d{4}[-.]\d{2}[-.]\d{2}|\d{2}[-.]\d{2}[-.]\d{4})[ \t]+(\d{2}:\d{2}:\d{2}(?:\.\d{1,4})?)[ \t]*(\[?(Info|Warn|Error|Fatal|INF|WRN|ERR|FTL)?\]?)?:?[ \t]*(.*)/;
+      /(\d{4}[-.]\d{2}[-.]\d{2}|\d{2}[-.]\d{2}[-.]\d{4})[ \t]+(\d{2}:\d{2}:\d{2})(?:\.\d{1,4})?[ \t]*(\[?(Info|Warn|Error|Fatal|INF|WRN|ERR|FTL)?\]?)?:?[ \t]*(.*)/;
+
+    let currentLog: Log | null = null;
 
     logLines.forEach((line) => {
       const match = logRegex.exec(line);
 
       if (match) {
-        const [
-          _,
-          date,
-          timeWithTicks,
-          logLevel = '',
-          source = '',
-          message = '',
-        ] = match;
-        const cleanedMessage = message.trim();
-        const thema = this.determineThema(source, cleanedMessage);
-        const time = timeWithTicks.split('.')[0];
+        if (currentLog) {
+          parsedLogs.push(currentLog);
+        }
 
-        parsedLogs.push({
+        const [_, date, time, logLevel = '', , message = ''] = match;
+        const cleanedMessage = message.trim();
+        const cleanedLogLevel = logLevel.replace(/[\[\]]/g, '');
+
+        const thema = this.determineThema(cleanedLogLevel, cleanedMessage);
+
+        currentLog = {
           Datum: this.formatDate(date),
           Uhrzeit: time,
-          Loglevel: logLevel.replace(/[\[\]]/g, '') || '',
+          Loglevel: cleanedLogLevel || '',
           Nachricht: cleanedMessage,
           Thema: thema,
-        });
+        };
+      } else if (currentLog) {
+        currentLog.Nachricht += ' ' + line;
       }
     });
+
+    if (currentLog) {
+      parsedLogs.push(currentLog);
+    }
 
     return parsedLogs;
   }

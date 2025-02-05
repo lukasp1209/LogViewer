@@ -34,6 +34,7 @@
     [dataSource]="logsDataSource"
     [columns]="['Datum', 'Uhrzeit', 'Loglevel', 'Nachricht', 'Thema']"
     [allowColumnResizing]="true"
+    [columnAutoWidth]="false"
     [width]="'100%'"
     [height]="700"
     [showBorders]="true"
@@ -42,7 +43,6 @@
     <dxo-toolbar>
       <dxi-item name="groupPanel"></dxi-item>
       <dxi-item location="after"></dxi-item>
-      <button class="btn btn-secondary">Filter zurücksetzen</button>
       <dxi-item name="exportButton"></dxi-item>
       <dxi-item name="columnChooserButton"></dxi-item>
       <dxi-item name="searchPanel"></dxi-item>
@@ -52,20 +52,33 @@
     <dxo-group-panel [visible]="true"></dxo-group-panel>
     <dxo-header-filter [visible]="true"></dxo-header-filter>
 
+    <!-- Datum -->
     <dxi-column
       dataField="Datum"
       dataType="date"
       format="dd.MM.yyyy"
-      [width]="200"
+      [width]="120"
     ></dxi-column>
-    <dxi-column dataField="Uhrzeit" [width]="200"></dxi-column>
+
+    <!-- Uhrzeit -->
+    <dxi-column dataField="Uhrzeit" [width]="100"></dxi-column>
+
+    <!-- Loglevel -->
     <dxi-column
       dataField="Loglevel"
       dataType="string"
-      [width]="200"
+      [width]="120"
     ></dxi-column>
-    <dxi-column dataField="Nachricht" dataType="string"></dxi-column>
-    <dxi-column dataField="Thema" dataType="string" [width]="200"></dxi-column>
+
+    <!-- Nachricht mit Zeilenumbruch -->
+    <dxi-column dataField="Nachricht" dataType="string">
+      <ng-template #cellTemplate let-data>
+        <div class="text-wrap">{{ data.value }}</div>
+      </ng-template>
+    </dxi-column>
+
+    <!-- Thema -->
+    <dxi-column dataField="Thema" dataType="string" [width]="150"></dxi-column>
   </dx-data-grid>
 
   <div *ngIf="logsDataSource.length === 0" class="alert alert-warning mt-3">
