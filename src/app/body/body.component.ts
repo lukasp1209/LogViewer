@@ -7,9 +7,9 @@ import {
   OnInit,
 } from '@angular/core';
 import * as JSZip from 'jszip';
-import { NgModel } from '@angular/forms';
 import { FileDataService } from 'src/app/FileData/file-data.service';
 import { Log, LogConverterService } from '../LogConverter/logconverter.service';
+import { DxDataGridComponent } from 'devextreme-angular';
 
 @Component({
   selector: 'app-body',
@@ -21,8 +21,11 @@ export class BodyComponent {
   @ViewChild('markedContentElement') markedContentElement:
     | ElementRef
     | undefined;
-  @ViewChild('searchInput') searchInput!: NgModel;
+  @ViewChild(DxDataGridComponent, { static: false })
+  logGrid!: DxDataGridComponent;
   @Output() searchEvent = new EventEmitter<string>();
+  router: any;
+  columns: any;
 
   constructor(
     protected fileDataService: FileDataService,
@@ -46,52 +49,71 @@ export class BodyComponent {
     const fileList: FileList = event.target.files;
     if (fileList.length > 0) {
       this.fileUploaded = false;
-      this.zipFile = fileList[0];
       this.zipContents = [];
       const zip = new JSZip();
-      zip
-        .loadAsync(this.zipFile)
-        .then((zipData) => {
-          const txtFiles: File[] = [];
-          const logs: Log[] = [];
+      const txtFiles: File[] = [];
+      const logs: Log[] = [];
 
-          Object.keys(zipData.files).forEach((fileName) => {
-            if (fileName.endsWith('.txt')) {
-              zipData.files[fileName].async('text').then((text) => {
-                const file = new File([new Blob([text])], fileName);
-                txtFiles.push(file);
+      for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i];
+        if (file.name.endsWith('.zip')) {
+          this.zipFile = file;
+          zip
+            .loadAsync(this.zipFile)
+            .then((zipData) => {
+              Object.keys(zipData.files).forEach((fileName) => {
+                if (fileName.endsWith('.txt')) {
+                  zipData.files[fileName].async('text').then((text) => {
+                    const extractedFile = new File(
+                      [new Blob([text])],
+                      fileName
+                    );
+                    txtFiles.push(extractedFile);
 
-                this.fileDataService.originalFileContentMap[fileName] = text;
+                    this.fileDataService.originalFileContentMap[fileName] =
+                      text;
+                    const parsedLogs = this.logConverter.parseLogs(text);
+                    logs.push(...parsedLogs);
 
-                const parsedLogs = this.logConverter.parseLogs(text);
-                logs.push(...parsedLogs);
-
-                this.fileLogsMap[fileName] = this.logConverter.parseLogs(text);
-
-                this.updateGridData(logs);
+                    this.fileLogsMap[fileName] =
+                      this.logConverter.parseLogs(text);
+                    this.updateGridData(logs);
+                  });
+                }
               });
-            }
-          });
+            })
+            .catch((error) => {
+              console.error('Fehler beim Laden der ZIP-Datei:', error);
+              this.fileUploaded = false;
+            });
+        } else if (file.name.endsWith('.txt')) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const text = e.target?.result as string;
+            this.fileDataService.originalFileContentMap[file.name] = text;
+            txtFiles.push(file);
+            const parsedLogs = this.logConverter.parseLogs(text);
+            logs.push(...parsedLogs);
+            this.fileLogsMap[file.name] = parsedLogs;
+            this.updateGridData(logs);
+          };
+          reader.readAsText(file);
+        }
+      }
 
-          this.txtFilesLoaded.emit(txtFiles);
-          this.zipContents = txtFiles;
-
-          if (this.zipContents.length > 0) {
-            this.selectedFileName = this.zipContents[0].name;
-          }
-
-          this.showUploadForm = false;
-          this.fileUploaded = true;
-        })
-        .catch((error) => {
-          console.error('Fehler beim Laden der ZIP-Datei:', error);
-          this.fileUploaded = false;
-        });
+      this.txtFilesLoaded.emit(txtFiles);
+      this.zipContents = txtFiles;
+      if (this.zipContents.length > 0) {
+        this.selectedFileName = this.zipContents[0].name;
+      }
+      this.showUploadForm = false;
+      this.fileUploaded = true;
     }
   }
 
   updateGridData(logs: Log[]): void {
     this.logsDataSource = logs;
+    this.resetGrid(this.logGrid);
   }
 
   onFileSelectionChange(selectedFile: string): void {
@@ -100,14 +122,12 @@ export class BodyComponent {
     } else {
       this.logsDataSource = [];
     }
-    this.resetGridFilters();
   }
 
-  resetGridFilters(): void {
-    const gridInstance = (document.querySelector('dx-data-grid') as any)
-      ?.instance;
-    if (gridInstance) {
-      gridInstance.clearFilter();
-    }
+  resetGrid(logGrid: DxDataGridComponent): void {
+    logGrid.instance.clearSelection();
+    logGrid.instance.clearFilter();
+    this.logsDataSource = [];
+    this.selectedFileName = '';
   }
 }

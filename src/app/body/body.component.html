@@ -42,15 +42,21 @@
     <dxo-filter-row [visible]="true"></dxo-filter-row>
     <dxo-toolbar>
       <dxi-item name="groupPanel"></dxi-item>
-      <dxi-item location="after"></dxi-item>
-      <dxi-item name="exportButton"></dxi-item>
-      <dxi-item name="columnChooserButton"></dxi-item>
+      <dxi-item location="after">
+        <dx-button
+          icon="undo"
+          text="Ansicht zurücksetzen"
+          (click)="resetGrid(logGrid)"
+        ></dx-button>
+      </dxi-item>
       <dxi-item name="searchPanel"></dxi-item>
     </dxo-toolbar>
     <dxo-search-panel [visible]="true"></dxo-search-panel>
+
     <dxo-scrolling mode="virtual"></dxo-scrolling>
     <dxo-group-panel [visible]="true"></dxo-group-panel>
     <dxo-header-filter [visible]="true"></dxo-header-filter>
+    <dxo-search [enabled]="true"></dxo-search>
 
     <!-- Datum -->
     <dxi-column
