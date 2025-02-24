@@ -23,6 +23,7 @@
     "@igniteui/material-icons-extended": "^3.0.0",
     "@ng-bootstrap/ng-bootstrap": "^15.1.2",
     "@popperjs/core": "^2.11.6",
+    "7zip-bin": "^5.2.0",
     "bootstrap": "^5.3.2",
     "devextreme": "^24.1.7",
     "devextreme-angular": "^24.1.7",

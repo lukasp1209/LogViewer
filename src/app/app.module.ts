@@ -17,7 +17,8 @@ import { MatNativeDateModule } from '@angular/material/core';
 import {
   DxDataGridModule,
   DxTemplateModule,
-  DxButtonModule
+  DxButtonModule,
+  DxTabPanelModule
 } from 'devextreme-angular';
 
 
@@ -38,7 +39,8 @@ import {
     MatNativeDateModule,
     DxDataGridModule,
     DxTemplateModule,
-    DxButtonModule
+    DxButtonModule,
+    DxTabPanelModule,
   ],
   providers: [],
   bootstrap: [AppComponent],

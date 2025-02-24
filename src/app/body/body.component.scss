@@ -1,7 +1,23 @@
 @import '~bootstrap/dist/css/bootstrap.css';
 
 body {
-  background-color: rgb(212, 208, 208);
+  margin: 10px;
+}
+
+.form-control {
+  width: 400px;
+}
+
+.upload-section{
+width: 400px;
+}
+
+.dropdown-section{
+ width: 400px;
+}
+
+.dx-datagrid {
+  margin: 10px;
 }
 
 // .dropzone {

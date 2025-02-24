@@ -129,4 +129,5 @@ export class BodyComponent {
     logGrid.instance.clearSelection();
     logGrid.instance.clearFilter();
   }
+  
 }

@@ -8,11 +8,13 @@
 </div>
 
 <div *ngIf="fileUploaded">
-  <ul class="nav nav-tabs">
-    <li class="nav-item">
-      <a class="nav-link active">{{ zipFile?.name }}</a>
-    </li>
-  </ul>
+<dx-tab-panel [items]="[{ title: zipFile?.name }]" [selectedIndex]="0">
+  <ng-template #titleTemplate let-data>
+    {{ zipFile?.name }}
+  </ng-template>
+</dx-tab-panel>
+
+
 
   <div class="dropdown-section">
     <label for="dropdownMenuButton" class="form-label">Log auswählen:</label>
@@ -29,7 +31,9 @@
     </select>
   </div>
 
+
   <dx-data-grid
+  class="dx-datagrid"
     *ngIf="logsDataSource.length > 0"
     [dataSource]="logsDataSource"
     [columns]="['Datum', 'Uhrzeit', 'Loglevel', 'Nachricht', 'Thema']"
@@ -52,7 +56,7 @@
       </dxi-item>
       <dxi-item name="searchPanel"></dxi-item>
     </dxo-toolbar>
-    <dxo-search-panel [visible]="true"></dxo-search-panel>
+    <dxo-search-panel [visible]="true" [highlightCaseSensitive]="false"></dxo-search-panel>
 
     <dxo-scrolling mode="virtual"></dxo-scrolling>
     <dxo-group-panel [visible]="true"></dxo-group-panel>
@@ -64,7 +68,7 @@
       dataField="Datum"
       dataType="date"
       format="dd.MM.yyyy"
-      [width]="120"
+      [width]="100"
     ></dxi-column>
 
     <!-- Uhrzeit -->
@@ -74,7 +78,7 @@
     <dxi-column
       dataField="Loglevel"
       dataType="string"
-      [width]="120"
+      [width]="100"
     ></dxi-column>
 
     <!-- Nachricht mit Zeilenumbruch -->
@@ -85,13 +89,13 @@
     </dxi-column>
 
     <!-- Thema -->
-    <dxi-column dataField="Thema" dataType="string" [width]="350"></dxi-column>
+    <dxi-column dataField="Thema" dataType="string" [width]="250"></dxi-column>
   </dx-data-grid>
 
   <div *ngIf="logsDataSource.length === 0" class="alert alert-warning mt-3">
     Bitte wählen Sie eine Datei aus, um die Logs anzuzeigen.
   </div>
-</div>
+
 
 <ng-template #noFilesLoaded>
   <div class="alert alert-info">
