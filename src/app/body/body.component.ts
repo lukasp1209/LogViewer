@@ -112,7 +112,7 @@ export class BodyComponent {
   }
 
   updateGridData(logs: Log[]): void {
-    this.logsDataSource = logs;
+    this.logsDataSource = [...logs.slice(0, 10000)];
     this.resetGrid(this.logGrid);
   }
 
@@ -122,12 +122,11 @@ export class BodyComponent {
     } else {
       this.logsDataSource = [];
     }
+    this.resetGrid(this.logGrid);
   }
 
   resetGrid(logGrid: DxDataGridComponent): void {
     logGrid.instance.clearSelection();
     logGrid.instance.clearFilter();
-    this.logsDataSource = [];
-    this.selectedFileName = '';
   }
 }

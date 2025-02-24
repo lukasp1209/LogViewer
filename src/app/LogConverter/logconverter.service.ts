@@ -17,6 +17,9 @@ const THEMA_MAPPING: { [key: string]: string[] } = {
   Drucken: ['print'],
   Einsatzerstellung: ['Generating'],
   Einsatzabschluss: ['removing silent record!'],
+  Nida_Start: ['NIDA started'],
+  Benutzer_Reset: ['Neustart durch den Benutzer'],
+  Manuell_gelöscht: ['Engine.record_do_action: removing record!'],
 };
 
 @Injectable({
@@ -29,31 +32,36 @@ export class LogConverterService {
 
   parseLogs(logContent: string): Log[] {
     const logLines = logContent.split('\n').map((line) => line.trim());
-
     const parsedLogs: Log[] = [];
+
     const logRegex =
       /(\d{4}[-.]\d{2}[-.]\d{2}|\d{2}[-.]\d{2}[-.]\d{4})[ \t]+(\d{2}:\d{2}:\d{2})(?:\.\d{1,4})?[ \t]*(\[?(Info|Warn|Error|Fatal|INF|WRN|ERR|FTL)?\]?)?:?[ \t]*(.*)/;
+      const serilogRegex = /^\[(\d{4}\.\d{2}\.\d{2}) (\d{2}:\d{2}:\d{2}\.\d{3}) ([A-Z]+)\s+([\w\d\.]+)\s*\]? (.*)$/;
 
     let currentLog: Log | null = null;
 
     logLines.forEach((line) => {
-      const match = logRegex.exec(line);
+      let match = serilogRegex.exec(line);
+      let isSerilog = !!match;
+
+      if (!isSerilog) {
+        match = logRegex.exec(line);
+      }
 
       if (match) {
         if (currentLog) {
           parsedLogs.push(currentLog);
         }
 
-        const [_, date, time, logLevel = '', , message = ''] = match;
-        const cleanedMessage = message.trim();
-        const cleanedLogLevel = logLevel.replace(/[\[\]]/g, '');
-
-        const thema = this.determineThema(cleanedLogLevel, cleanedMessage);
+        const [_, date, time, logLevel, rawThema, message] = match;
+        const cleanedMessage = message?.trim() || '';
+        const cleanedLogLevel = logLevel?.replace(/[\[\]]/g, '') || '';
+        const thema = isSerilog ? rawThema : this.determineThema(cleanedLogLevel, cleanedMessage);
 
         currentLog = {
           Datum: this.formatDate(date),
           Uhrzeit: time,
-          Loglevel: cleanedLogLevel || '',
+          Loglevel: cleanedLogLevel,
           Nachricht: cleanedMessage,
           Thema: thema,
         };
