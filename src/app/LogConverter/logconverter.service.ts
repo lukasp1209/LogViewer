@@ -36,7 +36,8 @@ export class LogConverterService {
 
     const logRegex =
       /(\d{4}[-.]\d{2}[-.]\d{2}|\d{2}[-.]\d{2}[-.]\d{4})[ \t]+(\d{2}:\d{2}:\d{2})(?:\.\d{1,4})?[ \t]*(\[?(Info|Warn|Error|Fatal|INF|WRN|ERR|FTL)?\]?)?:?[ \t]*(.*)/;
-      const serilogRegex = /^\[(\d{4}\.\d{2}\.\d{2}) (\d{2}:\d{2}:\d{2}\.\d{3}) ([A-Z]+)\s+([\w\d\.]+)\s*\]? (.*)$/;
+    
+    const serilogRegex = /^\[(\d{4}\.\d{2}\.\d{2}) (\d{2}:\d{2}:\d{2}\.\d{3}) ([A-Z]+)\s+([\w\d\.]+)\s*\]? (.*)$/;
 
     let currentLog: Log | null = null;
 
