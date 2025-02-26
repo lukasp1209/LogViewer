@@ -18,7 +18,8 @@ import {
   DxDataGridModule,
   DxTemplateModule,
   DxButtonModule,
-  DxTabPanelModule
+  DxTabPanelModule,
+  DxTabsModule
 } from 'devextreme-angular';
 
 
@@ -41,6 +42,7 @@ import {
     DxTemplateModule,
     DxButtonModule,
     DxTabPanelModule,
+    DxTabsModule
   ],
   providers: [],
   bootstrap: [AppComponent],

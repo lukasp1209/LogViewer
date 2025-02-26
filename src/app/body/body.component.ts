@@ -45,6 +45,10 @@ export class BodyComponent {
     [];
   fileLogsMap: { [key: string]: Log[] } = {};
 
+  isDragging = false;
+  selectedIndex = 0;
+  tabs = [{ title: 'Upload' }];
+
   loadFiles(event: any): void {
     const fileList: FileList = event.target.files;
     if (fileList.length > 0) {
@@ -129,5 +133,28 @@ export class BodyComponent {
     logGrid.instance.clearSelection();
     logGrid.instance.clearFilter();
   }
+
   
+onDragOver(event: DragEvent) {
+  event.preventDefault();
+  event.stopPropagation();
+  this.isDragging = true;
+}
+
+onDragLeave(event: DragEvent) {
+  event.preventDefault();
+  event.stopPropagation();
+  this.isDragging = false;
+}
+
+onDrop(event: DragEvent) {
+  event.preventDefault();
+  event.stopPropagation();
+  this.isDragging = false;
+
+  if (event.dataTransfer?.files.length) {
+    const file = event.dataTransfer.files[0];
+    this.loadFiles({ target: { files: [file] } });
+  }
+  }
 }

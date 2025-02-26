@@ -1,23 +1,22 @@
-<div class="upload-section" *ngIf="showUploadForm">
-  <input
-    type="file"
-    (change)="loadFiles($event)"
-    accept=".zip"
-    class="form-control"
-  />
+<div class="upload-section" *ngIf="showUploadForm" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)"
+  (drop)="onDrop($event)" [class.drag-over]="isDragging">
+  <input id="file-upload" type="file" (change)="loadFiles($event)" accept=".zip" class="upload-input" />
+  <label for="file-upload" class="upload-label">
+    <p class="upload-text">Datei hier ablegen oder klicken zum Hochladen</p>
+  </label>
 </div>
 
+
 <div *ngIf="fileUploaded">
-<dx-tab-panel [items]="[{ title: zipFile?.name }]" [selectedIndex]="0">
-  <ng-template #titleTemplate let-data>
-    {{ zipFile?.name }}
-  </ng-template>
-</dx-tab-panel>
-
-
+  <dx-tab-panel [items]="[{ title: zipFile?.name }]" [selectedIndex]="0" [deferRendering]="false"
+    [showNavButtons]="true" [repaintChangesOnly]="true" [selectedIndex]="selectedIndex">
+    <ng-template #titleTemplate let-data>
+      {{ zipFile?.name }}
+    </ng-template>
+  </dx-tab-panel>
 
   <div class="dropdown-section">
-    <label for="dropdownMenuButton" class="form-label">Log auswählen:</label>
+    <label for="dropdownMenuButton" class="form-label"></label>
     <select
       id="dropdownMenuButton"
       class="form-select"
@@ -56,7 +55,7 @@
       </dxi-item>
       <dxi-item name="searchPanel"></dxi-item>
     </dxo-toolbar>
-    <dxo-search-panel [visible]="true" [highlightCaseSensitive]="false"></dxo-search-panel>
+    <dxo-search-panel [visible]="true"></dxo-search-panel>
 
     <dxo-scrolling mode="virtual"></dxo-scrolling>
     <dxo-group-panel [visible]="true"></dxo-group-panel>
