@@ -36,8 +36,9 @@ export class LogConverterService {
 
     const logRegex =
       /(\d{4}[-.]\d{2}[-.]\d{2}|\d{2}[-.]\d{2}[-.]\d{4})[ \t]+(\d{2}:\d{2}:\d{2})(?:\.\d{1,4})?[ \t]*(\[?(Info|Warn|Error|Fatal|INF|WRN|ERR|FTL)?\]?)?:?[ \t]*(.*)/;
-    
-    const serilogRegex = /^\[(\d{4}\.\d{2}\.\d{2}) (\d{2}:\d{2}:\d{2}\.\d{3}) ([A-Z]+)\s+([\w\d\.]+)\s*\]? (.*)$/;
+
+    const serilogRegex =
+      /^\[(\d{4}\.\d{2}\.\d{2}) (\d{2}:\d{2}:\d{2}\.\d{3}) ([A-Z]+)\s+([\w\d\.]+)\s*\]? (.*)$/;
 
     let currentLog: Log | null = null;
 
@@ -57,7 +58,9 @@ export class LogConverterService {
         const [_, date, time, logLevel, rawThema, message] = match;
         const cleanedMessage = message?.trim() || '';
         const cleanedLogLevel = logLevel?.replace(/[\[\]]/g, '') || '';
-        const thema = isSerilog ? rawThema : this.determineThema(cleanedLogLevel, cleanedMessage);
+        const thema = isSerilog
+          ? rawThema
+          : this.determineThema(cleanedLogLevel, cleanedMessage);
 
         currentLog = {
           Datum: this.formatDate(date),
@@ -68,6 +71,16 @@ export class LogConverterService {
         };
       } else if (currentLog) {
         currentLog.Nachricht += ' ' + line;
+      } else {
+        const cleanedMessage = line.trim();
+        const log: Log = {
+          Datum: '',
+          Uhrzeit: '',
+          Loglevel: '',
+          Nachricht: cleanedMessage,
+          Thema: '',
+        };
+        parsedLogs.push(log);
       }
     });
 

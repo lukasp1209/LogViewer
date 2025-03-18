@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { Log } from '../LogConverter/logconverter.service';
 
 @Injectable({
   providedIn: 'root',

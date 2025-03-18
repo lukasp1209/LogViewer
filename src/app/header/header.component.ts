@@ -7,7 +7,5 @@ import { Component } from '@angular/core';
 })
 export class HeaderComponent {
   
-  reloadPage(): void {
-    window.location.reload();
-  }
+
 }

@@ -1,103 +1,164 @@
-<div class="upload-section" *ngIf="showUploadForm" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)"
-  (drop)="onDrop($event)" [class.drag-over]="isDragging">
-  <input id="file-upload" type="file" (change)="loadFiles($event)" accept=".zip" class="upload-input" />
+<div
+  *ngIf="tabs.length === 0"
+  class="upload-section"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave($event)"
+  (drop)="onDrop($event)"
+  [class.drag-over]="isDragging"
+>
+  <input
+    id="file-upload"
+    type="file"
+    (change)="loadFiles($event)"
+    accept=".zip"
+    class="upload-input"
+  />
   <label for="file-upload" class="upload-label">
     <p class="upload-text">Datei hier ablegen oder klicken zum Hochladen</p>
   </label>
 </div>
 
-
-<div *ngIf="fileUploaded">
-  <dx-tab-panel [items]="[{ title: zipFile?.name }]" [selectedIndex]="0" [deferRendering]="false"
-    [showNavButtons]="true" [repaintChangesOnly]="true" [selectedIndex]="selectedIndex">
-    <ng-template #titleTemplate let-data>
-      {{ zipFile?.name }}
+<div style="display: flex; align-items: center">
+  <dx-tab-panel
+    [items]="tabs"
+    displayExpr="title"
+    [(selectedIndex)]="selectedIndex"
+    [deferRendering]="false"
+    [showNavButtons]="true"
+    [repaintChangesOnly]="true"
+  >
+    <ng-template #titleTemplate let-tab>
+      <div class="tab-header">
+        <span>{{ tab.title }}</span>
+        <i
+          *ngIf="showCloseButton()"
+          class="dx-icon dx-icon-close"
+          (click)="closeButtonHandler(tab)"
+        ></i>
+      </div>
     </ng-template>
   </dx-tab-panel>
+  <dx-button
+    icon="plus"
+    (onClick)="addTab()"
+    style="margin-left: 10px"
+  ></dx-button>
+</div>
 
-  <div class="dropdown-section">
-    <label for="dropdownMenuButton" class="form-label"></label>
-    <select
-      id="dropdownMenuButton"
-      class="form-select"
-      [(ngModel)]="selectedFileName"
-      (change)="onFileSelectionChange(selectedFileName)"
+<div *ngFor="let tab of tabs; let i = index">
+  <div *ngIf="selectedIndex === i">
+    <div
+      *ngIf="tab.isNew"
+      class="upload-section"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave($event)"
+      (drop)="onDrop($event)"
+      [class.drag-over]="isDragging"
     >
-      <option value="" disabled selected>Bitte wählen...</option>
-      <option *ngFor="let file of zipContents" [value]="file.name">
-        {{ file.name | slice : file.name.lastIndexOf("/") + 1 }}
-      </option>
-    </select>
+      <input
+        id="file-upload"
+        type="file"
+        (change)="loadFiles($event)"
+        class="upload-input"
+      />
+      <label for="file-upload" class="upload-label">
+        <p class="upload-text">Datei hier ablegen oder klicken zum Hochladen</p>
+      </label>
+    </div>
+
+    <div *ngIf="!tab.isNew">
+      <div class="dropdown-section">
+        <label for="dropdownMenuButton" class="form-label"></label>
+        <select
+          id="dropdownMenuButton"
+          class="form-select"
+          [(ngModel)]="selectedFileName"
+          (change)="onFileSelectionChange(selectedFileName)"
+        >
+          <option value="" disabled selected>Bitte wählen...</option>
+          <option *ngFor="let file of zipContents" [value]="file.name">
+            {{ file.name | slice : file.name.lastIndexOf("/") + 1 }}
+          </option>
+        </select>
+      </div>
+
+      <dx-data-grid
+        class="dx-datagrid"
+        *ngIf="logsDataSource.length > 0"
+        [dataSource]="logsDataSource"
+        [columns]="['Datum', 'Uhrzeit', 'Loglevel', 'Nachricht', 'Thema']"
+        [allowColumnResizing]="true"
+        [columnAutoWidth]="false"
+        [width]="'100%'"
+        [height]="700"
+        [showBorders]="true"
+        [rowAlternationEnabled]="true"
+        [selectedRowKeys]="selectedRowKeys"
+        (onSelectionChanged)="onSelectionChanged($event)"
+      >
+        <dxo-filter-row [visible]="true"></dxo-filter-row>
+        <dxo-toolbar>
+          <dxi-item name="groupPanel"></dxi-item>
+          <dxi-item location="after">
+            <dx-button
+              icon="pulldown"
+              text="Ansicht zurücksetzen"
+              (click)="resetGrid(logGrid)"
+            ></dx-button>
+          </dxi-item>
+          <dxi-item name="searchPanel" searchmode="equals"></dxi-item>
+          <dxi-item location="after">
+            <dx-button icon="chevronup" (click)="(findPrevious)"></dx-button>
+            <dx-button icon="chevrondown" (click)="(findNext)"></dx-button>
+          </dxi-item>
+        </dxo-toolbar>
+        <dxo-search-panel [visible]="true"></dxo-search-panel>
+        <dxo-scrolling mode="virtual"></dxo-scrolling>
+        <dxo-group-panel [visible]="true"></dxo-group-panel>
+        <dxo-header-filter [visible]="true"></dxo-header-filter>
+
+        <dxo-search [enabled]="true"></dxo-search>
+
+        <dxi-column
+          dataField="Datum"
+          dataType="date"
+          format="dd.MM.yyyy"
+          [width]="100"
+        ></dxi-column>
+
+        <dxi-column dataField="Uhrzeit" [width]="100"></dxi-column>
+
+        <dxi-column
+          dataField="Loglevel"
+          dataType="string"
+          [width]="100"
+        ></dxi-column>
+
+        <dxi-column
+          dataField="Nachricht"
+          dataType="string"
+          [headerFilter]="{ visible: true, width: 600 }"
+        >
+          <ng-template #cellTemplate let-data>
+            <div class="text-wrap">{{ data.value }}</div>
+          </ng-template>
+        </dxi-column>
+
+        <dxi-column
+          dataField="Thema"
+          dataType="string"
+          [width]="250"
+        ></dxi-column>
+      </dx-data-grid>
+
+      <div *ngIf="logsDataSource.length === 0" class="alert alert-warning mt-3">
+        Bitte wählen Sie eine Datei aus, um die Logs anzuzeigen.
+      </div>
+    </div>
   </div>
+</div>
 
-
-  <dx-data-grid
-  class="dx-datagrid"
-    *ngIf="logsDataSource.length > 0"
-    [dataSource]="logsDataSource"
-    [columns]="['Datum', 'Uhrzeit', 'Loglevel', 'Nachricht', 'Thema']"
-    [allowColumnResizing]="true"
-    [columnAutoWidth]="false"
-    [width]="'100%'"
-    [height]="700"
-    [showBorders]="true"
-    [rowAlternationEnabled]="true"
-  >
-    <dxo-filter-row [visible]="true"></dxo-filter-row>
-    <dxo-toolbar>
-      <dxi-item name="groupPanel"></dxi-item>
-      <dxi-item location="after">
-        <dx-button
-          icon="undo"
-          text="Ansicht zurücksetzen"
-          (click)="resetGrid(logGrid)"
-        ></dx-button>
-      </dxi-item>
-      <dxi-item name="searchPanel"></dxi-item>
-    </dxo-toolbar>
-    <dxo-search-panel [visible]="true"></dxo-search-panel>
-
-    <dxo-scrolling mode="virtual"></dxo-scrolling>
-    <dxo-group-panel [visible]="true"></dxo-group-panel>
-    <dxo-header-filter [visible]="true"></dxo-header-filter>
-    <dxo-search [enabled]="true"></dxo-search>
-
-    <!-- Datum -->
-    <dxi-column
-      dataField="Datum"
-      dataType="date"
-      format="dd.MM.yyyy"
-      [width]="100"
-    ></dxi-column>
-
-    <!-- Uhrzeit -->
-    <dxi-column dataField="Uhrzeit" [width]="100"></dxi-column>
-
-    <!-- Loglevel -->
-    <dxi-column
-      dataField="Loglevel"
-      dataType="string"
-      [width]="100"
-    ></dxi-column>
-
-    <!-- Nachricht mit Zeilenumbruch -->
-    <dxi-column dataField="Nachricht" dataType="string">
-      <ng-template #cellTemplate let-data>
-        <div class="text-wrap">{{ data.value }}</div>
-      </ng-template>
-    </dxi-column>
-
-    <!-- Thema -->
-    <dxi-column dataField="Thema" dataType="string" [width]="250"></dxi-column>
-  </dx-data-grid>
-
-  <div *ngIf="logsDataSource.length === 0" class="alert alert-warning mt-3">
-    Bitte wählen Sie eine Datei aus, um die Logs anzuzeigen.
-  </div>
-
-
-<ng-template #noFilesLoaded>
-  <div class="alert alert-info">
-    Keine Dateien geladen. Bitte laden Sie eine ZIP-Datei hoch.
-  </div>
-</ng-template>
+<footer>
+  <p class="version">Version 1.3</p>
+  <p>&copy; 2025 medDV GmbH</p>
+</footer>
