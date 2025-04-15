@@ -10,6 +10,7 @@ import { FileDataService } from 'src/app/FileData/file-data.service';
 import { Log, LogConverterService } from '../LogConverter/logconverter.service';
 import { DxDataGridComponent } from 'devextreme-angular';
 import { UploadService } from '../services/upload.service';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-body',
@@ -65,7 +66,8 @@ export class BodyComponent {
     protected fileDataService: FileDataService,
     protected logConverter: LogConverterService,
     protected uploadService: UploadService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private sanitizer: DomSanitizer
   ) {
     this.logsDataSource = logConverter.getLogs();
   }
@@ -93,11 +95,13 @@ export class BodyComponent {
 
       const currentTab = this.tabs[this.selectedIndex];
       currentTab.isNew = false;
-      currentTab.zipFile = fileList[0]; // zipFile aus dem Upload
+      currentTab.zipFile = fileList[0];
       currentTab.zipContents = txtFiles;
       currentTab.fileLogsMap = fileLogsMap;
-      currentTab.selectedFileName = txtFiles.length > 0 ? txtFiles[0].name : '';
       currentTab.logsDataSource = logs;
+
+      // Aktualisieren der globalen Logs-Datenquelle
+      this.logsDataSource = logs;
 
       currentTab.title = fileList[0].name.replace(/\.zip$/, '');
 
@@ -106,39 +110,6 @@ export class BodyComponent {
       }
     } catch (error) {
       console.error('Error processing files:', error);
-    }
-  }
-
-  private createNewTab(txtFiles: File[], logs: Log[]): void {
-    const tabTitle = this.zipFile
-      ? this.zipFile.name.replace(/\.zip$/, '')
-      : 'Neuer Tab';
-
-    this.tabs = [
-      {
-        title: tabTitle,
-        isNew: false,
-        zipFile: this.zipFile,
-        zipContents: [...txtFiles],
-        selectedFileName: txtFiles.length > 0 ? txtFiles[0].name : '',
-        fileLogsMap: { ...this.fileLogsMap },
-        logsDataSource: [...logs],
-      },
-    ];
-    this.selectedIndex = 0;
-  }
-
-  private updateCurrentTab(txtFiles: File[], logs: Log[]): void {
-    const currentTab = this.tabs[this.selectedIndex];
-    currentTab.isNew = false;
-    currentTab.zipFile = this.zipFile;
-    currentTab.zipContents = [...txtFiles];
-    currentTab.selectedFileName = txtFiles.length > 0 ? txtFiles[0].name : '';
-    currentTab.fileLogsMap = { ...this.fileLogsMap };
-    currentTab.logsDataSource = [...logs];
-
-    if (this.zipFile) {
-      currentTab.title = this.zipFile.name.replace(/\.zip$/, '');
     }
   }
 
@@ -161,8 +132,10 @@ export class BodyComponent {
         0,
         1000
       );
+      this.logsDataSource = currentTab.logsDataSource;
     } else {
       currentTab.logsDataSource = [];
+      this.logsDataSource = [];
     }
 
     this.resetGrid(this.logGrid);
@@ -191,26 +164,12 @@ export class BodyComponent {
     }
   }
 
-  // addTab(): void {
-  //   const newTab = {
-  //     title: `Tab ${this.tabs.length + 1}`, // Beispiel für einen Titel
-  //     isNew: true,
-  //     zipFile: null,
-  //     zipContents: [],
-  //     selectedFileName: '',
-  //     fileLogsMap: {},
-  //     logsDataSource: [],
-  //   };
-  //   this.tabs.push(newTab);
-  //   this.selectedIndex = this.tabs.length - 1;
-  // }
-
   addTab(): void {
     let baseTitle = 'Neuer Tab';
     let newTitle = baseTitle;
     let counter = 1;
 
-    const maxTabs = 10;
+    const maxTabs = 7;
     if (this.tabs.length >= maxTabs) {
       this.tabs.shift();
     }
@@ -235,8 +194,15 @@ export class BodyComponent {
   }
 
   updateSearchResults(): void {
+    console.log('Search text:', this.searchText);
+    console.log('Logs data source:', this.logsDataSource);
+
     this.searchResults = [];
-    if (!this.searchText) return;
+    if (!this.searchText) {
+      console.log('Search text is empty. Clearing search results.');
+      this.currentSearchIndex = -1;
+      return;
+    }
 
     this.logsDataSource.forEach((log, index) => {
       const logString = JSON.stringify(log).toLowerCase();
@@ -246,60 +212,63 @@ export class BodyComponent {
     });
 
     console.log('Search Results:', this.searchResults);
+    console.log('Total matches found:', this.searchResults.length);
 
     this.currentSearchIndex = this.searchResults.length > 0 ? 0 : -1;
   }
-  highlightSearchResults(event: any): void {
-    if (event.rowType !== 'data') return;
 
-    const isCurrent =
-      this.searchResults[this.currentSearchIndex]?.index === event.rowIndex;
+  highlightText(text: string): SafeHtml {
+    if (!this.searchText || !text) return text;
 
-    if (isCurrent) {
-      event.rowElement.classList.add('highlight-row');
-    } else {
-      event.rowElement.classList.remove('highlight-row');
-    }
+    const escapedSearch = this.escapeRegex(this.searchText);
+    const regex = new RegExp(`(${escapedSearch})`, 'gi');
+    const highlighted = text.replace(regex, '<mark>$1</mark>');
+
+    return this.sanitizer.bypassSecurityTrustHtml(highlighted);
   }
 
-  highlightText(text: any): string {
-    if (!text || !this.searchText) {
-      return text;
-    }
-    const escapedText = this.searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(escapedText, 'gi');
-    return String(text).replace(
-      regex,
-      (match) => `<span class="highlight">${match}</span>`
-    );
+  private escapeRegex(text: string): string {
+    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   onSearchTextChange(): void {
     console.log('Search text changed:', this.searchText);
     this.updateSearchResults();
-    this.logGrid.instance.refresh();
+
+    if (this.logGrid?.instance) {
+      this.logGrid.instance.refresh();
+    }
   }
 
   clearSearchText(): void {
     this.searchText = '';
     this.logGrid.instance.refresh();
   }
+
   findNext(): void {
-    if (this.searchResults.length === 0) return;
+    if (this.searchResults.length === 0) {
+      console.log('No search results available to navigate.');
+      return;
+    }
 
     this.currentSearchIndex =
       (this.currentSearchIndex + 1) % this.searchResults.length;
 
+    console.log('Moving to next result, index:', this.currentSearchIndex);
     this.scrollToCurrentSearchResult();
   }
 
   findPrevious(): void {
-    if (this.searchResults.length === 0) return;
+    if (this.searchResults.length === 0) {
+      console.log('No search results available to navigate.');
+      return;
+    }
 
     this.currentSearchIndex =
       (this.currentSearchIndex - 1 + this.searchResults.length) %
       this.searchResults.length;
 
+    console.log('Moving to previous result, index:', this.currentSearchIndex);
     this.scrollToCurrentSearchResult();
   }
 
@@ -315,13 +284,11 @@ export class BodyComponent {
     if (event) {
       event.stopPropagation();
     }
-
     this.tabs.splice(index, 1);
 
     if (this.selectedIndex >= this.tabs.length) {
       this.selectedIndex = this.tabs.length - 1;
     }
-
     this.cdr.detectChanges();
   }
 }
