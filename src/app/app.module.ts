@@ -14,15 +14,18 @@ import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import { HttpClientModule } from '@angular/common/http';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+
 import {
   DxDataGridModule,
   DxTemplateModule,
   DxButtonModule,
   DxTabPanelModule,
-  DxTabsModule
+  DxTabsModule,
+  DxTextBoxModule,
 } from 'devextreme-angular';
-
-
 
 @NgModule({
   declarations: [AppComponent, HeaderComponent, BodyComponent],
@@ -42,7 +45,11 @@ import {
     DxTemplateModule,
     DxButtonModule,
     DxTabPanelModule,
-    DxTabsModule
+    DxTabsModule,
+    DxTextBoxModule,
+    MatButtonModule,
+    MatIconModule,
+    MatTabsModule,
   ],
   providers: [],
   bootstrap: [AppComponent],

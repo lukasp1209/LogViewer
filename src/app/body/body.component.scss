@@ -1,6 +1,5 @@
 @import '~bootstrap/dist/css/bootstrap.css';
 
-
 .form-control {
   width: 400px;
 }
@@ -56,11 +55,86 @@ footer {
   color: #080808;
   padding: 10px 20px;
   text-align: center;
-  width: 90%;
+  width: 80%;
   margin: 0 auto;
   border-radius: 5px;
 }
 
 footer p {
-  margin: 5px 0;
+  margin: 1px 0;
+}
+
+
+::ng-deep .mat-tab-nav-bar {
+  border-bottom: 1px solid #ccc;
+  background-color: #f8f8f8;
+}
+
+::ng-deep .mat-tab-link {
+  color: black;
+  text-decoration: none;
+  padding: 8px 16px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background-color 0.3s ease;
+}
+
+::ng-deep .mat-tab-link:hover {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+::ng-deep .mat-tab-link.mat-tab-label-active {
+  color: #222;
+  border-bottom: 2px solid #888;
+  font-weight: 600;
+  background-color: #eaeaea;
+}
+
+::ng-deep .mat-tab-link:focus {
+  outline: none;
+}
+
+.tab-title {
+  display: inline-block;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: border-color 0.3s ease;
+}
+
+.tab-title.active {
+  border-bottom: 2px solid #58595a;
+  font-weight: bold;
+}
+
+.tab-title:hover {
+  background-color: #f0f0f0;
+}
+.close-tab-button {
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  margin-left: 4px;
+  vertical-align: middle;
+  color: #888;
+}
+
+.close-tab-button:hover {
+  color: #444;
+}
+
+.highlight {
+  font-weight: bold;
+  padding: 0 2px;
+  border-radius: 2px;
+  background-color: #ffe58f !important;
+}
+.search-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
 }

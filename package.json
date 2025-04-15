@@ -29,6 +29,7 @@
     "devextreme-angular": "^24.1.7",
     "fflate": "^0.8.1",
     "hammerjs": "^2.0.8",
+    "highlight-words": "^2.0.0",
     "html2canvas": "^1.4.1",
     "igniteui-angular": "^16.1.14",
     "jspdf": "^2.5.2",

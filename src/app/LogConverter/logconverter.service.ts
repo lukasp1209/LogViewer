@@ -14,7 +14,7 @@ const THEMA_MAPPING: { [key: string]: string[] } = {
   Wlan: ['WlanManager', 'WlanStatus'],
   Bluetooth: ['Bluetooth'],
   Engine: ['Engine'],
-  Drucken: ['print'],
+  Drucken: ['print', 'Printer'],
   Einsatzerstellung: ['Generating'],
   Einsatzabschluss: ['removing silent record!'],
   Nida_Start: ['NIDA started'],
@@ -30,7 +30,7 @@ export class LogConverterService {
     return logs;
   }
 
-  parseLogs(logContent: string): Log[] {
+  parseLogs(logContent: string, fileName: string): Log[] {
     const logLines = logContent.split('\n').map((line) => line.trim());
     const parsedLogs: Log[] = [];
 
@@ -43,6 +43,10 @@ export class LogConverterService {
     let currentLog: Log | null = null;
 
     logLines.forEach((line) => {
+      if (fileName === 'preferences.txt') {
+        line = line.replace(/ /g, '\n');
+      }
+
       let match = serilogRegex.exec(line);
       let isSerilog = !!match;
 

@@ -6,10 +6,10 @@ import {
   ViewChild,
   ChangeDetectorRef,
 } from '@angular/core';
-import * as JSZip from 'jszip';
 import { FileDataService } from 'src/app/FileData/file-data.service';
 import { Log, LogConverterService } from '../LogConverter/logconverter.service';
 import { DxDataGridComponent } from 'devextreme-angular';
+import { UploadService } from '../services/upload.service';
 
 @Component({
   selector: 'app-body',
@@ -26,6 +26,7 @@ export class BodyComponent {
   @Output() searchEvent = new EventEmitter<string>();
 
   logsDataSource: Log[] = [];
+  hoveredTabIndex: number | null = null;
   zipFile: File | null = null;
   zipContents: Array<File> = [];
   selectedFileName: string = '';
@@ -56,147 +57,115 @@ export class BodyComponent {
   searchText: string = '';
   selectedRowKeys: any[] = [];
   currentIndex: number = -1;
+  highlightedLogs: string[] = [];
+  private searchResults: { index: number; log: Log }[] = [];
+  private currentSearchIndex: number = -1;
 
   constructor(
     protected fileDataService: FileDataService,
     protected logConverter: LogConverterService,
+    protected uploadService: UploadService,
     private cdr: ChangeDetectorRef
   ) {
     this.logsDataSource = logConverter.getLogs();
   }
 
-  findNext(): void {}
-  findPrevious(): void {}
+  ngAfterViewInit(): void {
+    if (!this.logGrid) {
+      console.error('logGrid is not initialized.');
+    } else {
+      console.log('logGrid initialized successfully.');
+    }
+  }
 
   onSelectionChanged(e: any): void {
     this.selectedRowKeys = e.selectedRowKeys;
   }
 
-  loadFiles(event: any): void {
+  async loadFiles(event: any): Promise<void> {
     const fileList: FileList = event.target.files;
-    if (fileList.length > 0) {
-      this.zipContents = [];
-      const zip = new JSZip();
-      const txtFiles: File[] = [];
-      const logs: Log[] = [];
+    if (fileList.length === 0) return;
 
-      for (let i = 0; i < fileList.length; i++) {
-        const file = fileList[i];
-        if (file.name.endsWith('.zip')) {
-          this.zipFile = file;
-          zip
-            .loadAsync(this.zipFile)
-            .then((zipData) => {
-              Object.keys(zipData.files).forEach((fileName) => {
-                if (fileName.endsWith('.txt')) {
-                  zipData.files[fileName].async('text').then((text) => {
-                    const extractedFile = new File(
-                      [new Blob([text])],
-                      fileName
-                    );
-                    txtFiles.push(extractedFile);
-
-                    this.fileDataService.originalFileContentMap[fileName] =
-                      text;
-                    const parsedLogs = this.logConverter.parseLogs(text);
-                    logs.push(...parsedLogs);
-
-                    this.fileLogsMap[fileName] =
-                      this.logConverter.parseLogs(text);
-                    this.updateGridData(logs);
-                  });
-                }
-              });
-            })
-            .then(() => {
-              if (txtFiles.length > 0) {
-                this.selectedFileName = txtFiles[0].name;
-                this.onFileSelectionChange(this.selectedFileName);
-              }
-            })
-            .catch((error) => {
-              console.error('Fehler beim Laden der ZIP-Datei:', error);
-            });
-        } else if (file.name.endsWith('.txt')) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const text = e.target?.result as string;
-            this.fileDataService.originalFileContentMap[file.name] = text;
-            txtFiles.push(file);
-            const parsedLogs = this.logConverter.parseLogs(text);
-            logs.push(...parsedLogs);
-            this.fileLogsMap[file.name] = parsedLogs;
-            this.updateGridData(logs);
-
-            if (txtFiles.length > 0) {
-              this.selectedFileName = txtFiles[0].name;
-              this.onFileSelectionChange(this.selectedFileName);
-            }
-          };
-          reader.readAsText(file);
-        }
-      }
-
+    try {
+      const { txtFiles, logs, fileLogsMap } =
+        await this.uploadService.processFiles(fileList);
       this.txtFilesLoaded.emit(txtFiles);
-      this.zipContents = txtFiles;
 
-      if (this.tabs.length === 0 || this.selectedIndex < 0) {
-        let tabTitle = this.zipFile
-          ? this.zipFile.name.replace(/\.zip$/, '')
-          : 'Upload';
+      const currentTab = this.tabs[this.selectedIndex];
+      currentTab.isNew = false;
+      currentTab.zipFile = fileList[0]; // zipFile aus dem Upload
+      currentTab.zipContents = txtFiles;
+      currentTab.fileLogsMap = fileLogsMap;
+      currentTab.selectedFileName = txtFiles.length > 0 ? txtFiles[0].name : '';
+      currentTab.logsDataSource = logs;
 
-        this.tabs = [
-          {
-            title: tabTitle,
-            isNew: false,
-            zipFile: this.zipFile,
-            zipContents: [...txtFiles],
-            selectedFileName: txtFiles.length > 0 ? txtFiles[0].name : '',
-            fileLogsMap: { ...this.fileLogsMap },
-            logsDataSource: [...logs],
-          },
-        ];
-        this.selectedIndex = 0;
-      } else {
-        let currentTab = this.tabs[this.selectedIndex];
-        currentTab.isNew = false;
-        currentTab.zipFile = this.zipFile;
-        currentTab.zipContents = [...txtFiles];
-        currentTab.selectedFileName =
-          txtFiles.length > 0 ? txtFiles[0].name : '';
-        currentTab.fileLogsMap = { ...this.fileLogsMap };
-        currentTab.logsDataSource = [...logs];
+      currentTab.title = fileList[0].name.replace(/\.zip$/, '');
 
-        if (this.zipFile) {
-          currentTab.title = this.zipFile.name.replace(/\.zip$/, '');
-        }
+      if (currentTab.selectedFileName) {
+        this.onFileSelectionChange(currentTab.selectedFileName);
       }
-
-      if (this.tabs[this.selectedIndex].selectedFileName) {
-        this.onFileSelectionChange(
-          this.tabs[this.selectedIndex].selectedFileName
-        );
-      }
+    } catch (error) {
+      console.error('Error processing files:', error);
     }
   }
 
-  updateGridData(logs: Log[]): void {
-    this.logsDataSource = [...logs.slice(0, 1000)];
-    this.resetGrid(this.logGrid);
+  private createNewTab(txtFiles: File[], logs: Log[]): void {
+    const tabTitle = this.zipFile
+      ? this.zipFile.name.replace(/\.zip$/, '')
+      : 'Neuer Tab';
+
+    this.tabs = [
+      {
+        title: tabTitle,
+        isNew: false,
+        zipFile: this.zipFile,
+        zipContents: [...txtFiles],
+        selectedFileName: txtFiles.length > 0 ? txtFiles[0].name : '',
+        fileLogsMap: { ...this.fileLogsMap },
+        logsDataSource: [...logs],
+      },
+    ];
+    this.selectedIndex = 0;
   }
 
-  onFileSelectionChange(selectedFile: string): void {
-    if (selectedFile && this.fileLogsMap[selectedFile]) {
-      this.logsDataSource = this.fileLogsMap[selectedFile].slice(0, 1000);
-    } else {
-      this.logsDataSource = [];
+  private updateCurrentTab(txtFiles: File[], logs: Log[]): void {
+    const currentTab = this.tabs[this.selectedIndex];
+    currentTab.isNew = false;
+    currentTab.zipFile = this.zipFile;
+    currentTab.zipContents = [...txtFiles];
+    currentTab.selectedFileName = txtFiles.length > 0 ? txtFiles[0].name : '';
+    currentTab.fileLogsMap = { ...this.fileLogsMap };
+    currentTab.logsDataSource = [...logs];
+
+    if (this.zipFile) {
+      currentTab.title = this.zipFile.name.replace(/\.zip$/, '');
     }
-    this.resetGrid(this.logGrid);
   }
 
   resetGrid(logGrid: DxDataGridComponent): void {
+    if (!logGrid || !logGrid.instance) {
+      console.warn('logGrid is not initialized or instance is undefined.');
+      return;
+    }
+
     logGrid.instance.clearSelection();
     logGrid.instance.clearFilter();
+  }
+
+  onFileSelectionChange(selectedFile: string): void {
+    const currentTab = this.tabs[this.selectedIndex];
+    currentTab.selectedFileName = selectedFile;
+
+    if (selectedFile && currentTab.fileLogsMap[selectedFile]) {
+      currentTab.logsDataSource = currentTab.fileLogsMap[selectedFile].slice(
+        0,
+        1000
+      );
+    } else {
+      currentTab.logsDataSource = [];
+    }
+
+    this.resetGrid(this.logGrid);
   }
 
   onDragOver(event: DragEvent) {
@@ -221,6 +190,20 @@ export class BodyComponent {
       this.loadFiles({ target: { files: [file] } });
     }
   }
+
+  // addTab(): void {
+  //   const newTab = {
+  //     title: `Tab ${this.tabs.length + 1}`, // Beispiel für einen Titel
+  //     isNew: true,
+  //     zipFile: null,
+  //     zipContents: [],
+  //     selectedFileName: '',
+  //     fileLogsMap: {},
+  //     logsDataSource: [],
+  //   };
+  //   this.tabs.push(newTab);
+  //   this.selectedIndex = this.tabs.length - 1;
+  // }
 
   addTab(): void {
     let baseTitle = 'Neuer Tab';
@@ -250,19 +233,95 @@ export class BodyComponent {
     this.selectedIndex = this.tabs.length - 1;
     this.cdr.detectChanges();
   }
-  closeButtonHandler(tab: any) {
-    const index = this.tabs.indexOf(tab);
 
-    if (index !== -1) {
-      this.tabs.splice(index, 1);
-    }
+  updateSearchResults(): void {
+    this.searchResults = [];
+    if (!this.searchText) return;
 
-    if (this.selectedIndex >= this.tabs.length && this.selectedIndex > 0) {
-      this.selectedIndex = this.tabs.length - 1;
+    this.logsDataSource.forEach((log, index) => {
+      const logString = JSON.stringify(log).toLowerCase();
+      if (logString.includes(this.searchText.toLowerCase())) {
+        this.searchResults.push({ index, log });
+      }
+    });
+
+    console.log('Search Results:', this.searchResults);
+
+    this.currentSearchIndex = this.searchResults.length > 0 ? 0 : -1;
+  }
+  highlightSearchResults(event: any): void {
+    if (event.rowType !== 'data') return;
+
+    const isCurrent =
+      this.searchResults[this.currentSearchIndex]?.index === event.rowIndex;
+
+    if (isCurrent) {
+      event.rowElement.classList.add('highlight-row');
+    } else {
+      event.rowElement.classList.remove('highlight-row');
     }
   }
 
-  showCloseButton() {
-    return this.tabs.length > 1;
+  highlightText(text: any): string {
+    if (!text || !this.searchText) {
+      return text;
+    }
+    const escapedText = this.searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escapedText, 'gi');
+    return String(text).replace(
+      regex,
+      (match) => `<span class="highlight">${match}</span>`
+    );
+  }
+
+  onSearchTextChange(): void {
+    console.log('Search text changed:', this.searchText);
+    this.updateSearchResults();
+    this.logGrid.instance.refresh();
+  }
+
+  clearSearchText(): void {
+    this.searchText = '';
+    this.logGrid.instance.refresh();
+  }
+  findNext(): void {
+    if (this.searchResults.length === 0) return;
+
+    this.currentSearchIndex =
+      (this.currentSearchIndex + 1) % this.searchResults.length;
+
+    this.scrollToCurrentSearchResult();
+  }
+
+  findPrevious(): void {
+    if (this.searchResults.length === 0) return;
+
+    this.currentSearchIndex =
+      (this.currentSearchIndex - 1 + this.searchResults.length) %
+      this.searchResults.length;
+
+    this.scrollToCurrentSearchResult();
+  }
+
+  scrollToCurrentSearchResult(): void {
+    const currentResult = this.searchResults[this.currentSearchIndex];
+    if (currentResult && this.logGrid?.instance) {
+      this.logGrid.instance.navigateToRow(currentResult.index);
+      this.logGrid.instance.selectRowsByIndexes([currentResult.index]);
+    }
+  }
+
+  closeTab(index: number, event?: MouseEvent): void {
+    if (event) {
+      event.stopPropagation();
+    }
+
+    this.tabs.splice(index, 1);
+
+    if (this.selectedIndex >= this.tabs.length) {
+      this.selectedIndex = this.tabs.length - 1;
+    }
+
+    this.cdr.detectChanges();
   }
 }
