@@ -49,7 +49,7 @@
   ></dx-button>
 </div>
 
-<div *ngFor="let tab of tabs; let i = index">
+<div *ngFor="let tab of tabs; let i = index" style="margin-bottom: 20px">
   <div *ngIf="selectedIndex === i">
     <div
       *ngIf="tab.isNew"
@@ -58,6 +58,7 @@
       (dragleave)="onDragLeave($event)"
       (drop)="onDrop($event)"
       [class.drag-over]="isDragging"
+      style="margin-bottom: 20px"
     >
       <input
         [id]="'file-upload-' + i"
@@ -70,8 +71,8 @@
       </label>
     </div>
 
-    <div *ngIf="!tab.isNew">
-      <div class="dropdown-section">
+    <div *ngIf="!tab.isNew" style="margin-bottom: 20px">
+      <div class="dropdown-section" style="margin-bottom: 20px">
         <label for="dropdownMenuButton" class="form-label"></label>
         <select
           id="dropdownMenuButton"
@@ -94,7 +95,7 @@
         [allowColumnResizing]="true"
         [columnAutoWidth]="false"
         [width]="'100%'"
-        [height]="700"
+        [height]="'calc(100vh - 250px)'"
         [showBorders]="true"
         [rowAlternationEnabled]="true"
         [selectedRowKeys]="selectedRowKeys"
@@ -110,38 +111,6 @@
               (click)="resetGrid(logGrid)"
             ></dx-button>
           </dxi-item>
-          <dxi-item location="after">
-            <div style="display: flex; align-items: center">
-              <input
-                type="text"
-                [(ngModel)]="searchText"
-                placeholder="Suchtext eingeben..."
-                class="form-control"
-                (input)="onSearchTextChange()"
-                style="margin-right: 5px"
-              />
-              <button
-                *ngIf="searchText"
-                class="btn btn-outline-secondary"
-                (click)="clearSearchText()"
-                style="padding: 0 10px; height: 30px"
-              >
-                X
-              </button>
-              <dx-button
-                class="search-nav"
-                *ngIf="searchText"
-                icon="chevronup"
-                (click)="findPrevious()"
-              ></dx-button>
-              <dx-button
-                class="search-nav"
-                *ngIf="searchText"
-                icon="chevrondown"
-                (click)="findNext()"
-              ></dx-button>
-            </div>
-          </dxi-item>
         </dxo-toolbar>
         <dxo-scrolling mode="virtual"></dxo-scrolling>
         <dxo-group-panel [visible]="true"></dxo-group-panel>
@@ -151,23 +120,13 @@
           dataField="Datum"
           dataType="date"
           format="dd.MM.yyyy"
-          [width]="100"
+          [width]="150"
         >
-          <ng-template #cellTemplate let-data>
-            <div [innerHTML]="highlightText(data.data.Datum)"></div>
-          </ng-template>
         </dxi-column>
 
-        <dxi-column dataField="Uhrzeit" [width]="100">
-          <ng-template #cellTemplate let-data>
-            <div [innerHTML]="highlightText(data.data.Uhrzeit)"></div>
-          </ng-template>
-        </dxi-column>
+        <dxi-column dataField="Uhrzeit" [width]="150"> </dxi-column>
 
         <dxi-column dataField="Loglevel" dataType="string" [width]="100">
-          <ng-template #cellTemplate let-data>
-            <div [innerHTML]="highlightText(data.data.Loglevel)"></div>
-          </ng-template>
         </dxi-column>
 
         <dxi-column
@@ -175,21 +134,16 @@
           dataType="string"
           [headerFilter]="{ visible: true, width: 600 }"
         >
-          <ng-template #cellTemplate let-data>
-            <div [innerHTML]="highlightText(data.data.Nachricht)"></div>
-          </ng-template>
         </dxi-column>
 
         <dxi-column dataField="Thema" dataType="string" [width]="250">
-          <ng-template #cellTemplate let-data>
-            <div [innerHTML]="highlightText(data.data.Thema)"></div>
-          </ng-template>
         </dxi-column>
       </dx-data-grid>
 
       <div
         *ngIf="tab.logsDataSource.length === 0"
         class="alert alert-warning mt-3"
+        style="margin-bottom: 20px"
       >
         Bitte wählen Sie eine Datei aus, um die Logs anzuzeigen.
       </div>
@@ -197,7 +151,8 @@
   </div>
 </div>
 
-<!-- <footer>
+<!-- Footer -->
+<footer style="text-align: center; margin-top: 20px">
   <p class="version">Version 1.4</p>
   <p>&copy; 2025 medDV GmbH</p>
-</footer> -->
+</footer>

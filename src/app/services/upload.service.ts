@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as JSZip from 'jszip';
-import { Log, LogConverterService } from '../LogConverter/logconverter.service';
+import { Log, LogConverterService } from './logconverter.service';
 
 @Injectable({
   providedIn: 'root',
@@ -41,7 +41,7 @@ export class UploadService {
     const zipData = await zip.loadAsync(file);
     const fileNames = Object.keys(zipData.files);
 
-    const maxFiles = 100000000;
+    const maxFiles = 1000;
     let processedFiles = 0;
 
     for (const fileName of fileNames) {
@@ -57,10 +57,19 @@ export class UploadService {
       if (fileName.endsWith('.txt')) {
         try {
           const text = await zipData.files[fileName].async('text');
+          const lines = text.split('\n');
+          const chunkSize = 1000000;
+          const parsedLogs: Log[] = [];
+
+          for (let i = 0; i < lines.length; i += chunkSize) {
+            const chunk = lines.slice(i, i + chunkSize).join('\n');
+            const chunkLogs = this.logConverter.parseLogs(chunk, fileName);
+            parsedLogs.push(...chunkLogs);
+          }
+
           const extractedFile = new File([new Blob([text])], fileName);
           txtFiles.push(extractedFile);
 
-          const parsedLogs = this.logConverter.parseLogs(text, fileName);
           logs.push(...parsedLogs);
           fileLogsMap[fileName] = parsedLogs;
 
@@ -73,6 +82,7 @@ export class UploadService {
       }
     }
   }
+
   private async processTxtFile(
     file: File,
     txtFiles: File[],
@@ -82,7 +92,16 @@ export class UploadService {
     const text = await this.readFileAsText(file);
     txtFiles.push(file);
 
-    const parsedLogs = this.logConverter.parseLogs(text, file.name);
+    const lines = text.split('\n');
+    const chunkSize = 10000;
+    const parsedLogs: Log[] = [];
+
+    for (let i = 0; i < lines.length; i += chunkSize) {
+      const chunk = lines.slice(i, i + chunkSize).join('\n');
+      const chunkLogs = this.logConverter.parseLogs(chunk, file.name);
+      parsedLogs.push(...chunkLogs);
+    }
+
     logs.push(...parsedLogs);
     fileLogsMap[file.name] = parsedLogs;
   }

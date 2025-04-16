@@ -6,11 +6,12 @@ import {
   ViewChild,
   ChangeDetectorRef,
 } from '@angular/core';
-import { FileDataService } from 'src/app/FileData/file-data.service';
-import { Log, LogConverterService } from '../LogConverter/logconverter.service';
+import { FileDataService } from 'src/app/services/file-data.service';
+import { Log, LogConverterService } from '../services/logconverter.service';
 import { DxDataGridComponent } from 'devextreme-angular';
 import { UploadService } from '../services/upload.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { DragAndDropService } from '../services/dragAndDrop.service';
 
 @Component({
   selector: 'app-body',
@@ -28,6 +29,7 @@ export class BodyComponent {
 
   logsDataSource: Log[] = [];
   hoveredTabIndex: number | null = null;
+  hoveredRowIndex: number | null = null;
   zipFile: File | null = null;
   zipContents: Array<File> = [];
   selectedFileName: string = '';
@@ -59,15 +61,13 @@ export class BodyComponent {
   selectedRowKeys: any[] = [];
   currentIndex: number = -1;
   highlightedLogs: string[] = [];
-  private searchResults: { index: number; log: Log }[] = [];
-  private currentSearchIndex: number = -1;
 
   constructor(
     protected fileDataService: FileDataService,
     protected logConverter: LogConverterService,
     protected uploadService: UploadService,
-    private cdr: ChangeDetectorRef,
-    private sanitizer: DomSanitizer
+    protected DragAndDropService: DragAndDropService,
+    private cdr: ChangeDetectorRef
   ) {
     this.logsDataSource = logConverter.getLogs();
   }
@@ -99,15 +99,11 @@ export class BodyComponent {
       currentTab.zipContents = txtFiles;
       currentTab.fileLogsMap = fileLogsMap;
       currentTab.logsDataSource = logs;
-
-      // Aktualisieren der globalen Logs-Datenquelle
       this.logsDataSource = logs;
 
       currentTab.title = fileList[0].name.replace(/\.zip$/, '');
 
-      if (currentTab.selectedFileName) {
-        this.onFileSelectionChange(currentTab.selectedFileName);
-      }
+      this.onFileSelectionChange(null);
     } catch (error) {
       console.error('Error processing files:', error);
     }
@@ -123,44 +119,34 @@ export class BodyComponent {
     logGrid.instance.clearFilter();
   }
 
-  onFileSelectionChange(selectedFile: string): void {
+  onFileSelectionChange(selectedFile: string | null = null): void {
     const currentTab = this.tabs[this.selectedIndex];
-    currentTab.selectedFileName = selectedFile;
+
+    if (!selectedFile && currentTab.zipContents.length > 0) {
+      selectedFile = currentTab.zipContents[0].name;
+    }
+
+    currentTab.selectedFileName = selectedFile || '';
 
     if (selectedFile && currentTab.fileLogsMap[selectedFile]) {
       currentTab.logsDataSource = currentTab.fileLogsMap[selectedFile].slice(
         0,
-        1000
+        1000000
       );
       this.logsDataSource = currentTab.logsDataSource;
     } else {
       currentTab.logsDataSource = [];
       this.logsDataSource = [];
     }
-
-    this.resetGrid(this.logGrid);
+    console.log(`File selection changed to: ${selectedFile}`);
   }
 
-  onDragOver(event: DragEvent) {
-    event.preventDefault();
-    event.stopPropagation();
-    this.isDragging = true;
-  }
-
-  onDragLeave(event: DragEvent) {
-    event.preventDefault();
-    event.stopPropagation();
-    this.isDragging = false;
-  }
-
-  onDrop(event: DragEvent) {
-    event.preventDefault();
-    event.stopPropagation();
-    this.isDragging = false;
-
-    if (event.dataTransfer?.files.length) {
-      const file = event.dataTransfer.files[0];
-      this.loadFiles({ target: { files: [file] } });
+  applyFilter(column: string, value: string): void {
+    if (this.logGrid?.instance) {
+      this.logGrid.instance.filter([column, '=', value]);
+      console.log(`Filter applied: ${column} = ${value}`);
+    } else {
+      console.warn('logGrid instance is not available.');
     }
   }
 
@@ -193,102 +179,59 @@ export class BodyComponent {
     this.cdr.detectChanges();
   }
 
-  updateSearchResults(): void {
-    console.log('Search text:', this.searchText);
-    console.log('Logs data source:', this.logsDataSource);
-
-    this.searchResults = [];
-    if (!this.searchText) {
-      console.log('Search text is empty. Clearing search results.');
-      this.currentSearchIndex = -1;
-      return;
-    }
-
-    this.logsDataSource.forEach((log, index) => {
-      const logString = JSON.stringify(log).toLowerCase();
-      if (logString.includes(this.searchText.toLowerCase())) {
-        this.searchResults.push({ index, log });
-      }
-    });
-
-    console.log('Search Results:', this.searchResults);
-    console.log('Total matches found:', this.searchResults.length);
-
-    this.currentSearchIndex = this.searchResults.length > 0 ? 0 : -1;
-  }
-
-  highlightText(text: string): SafeHtml {
-    if (!this.searchText || !text) return text;
-
-    const escapedSearch = this.escapeRegex(this.searchText);
-    const regex = new RegExp(`(${escapedSearch})`, 'gi');
-    const highlighted = text.replace(regex, '<mark>$1</mark>');
-
-    return this.sanitizer.bypassSecurityTrustHtml(highlighted);
-  }
-
-  private escapeRegex(text: string): string {
-    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  }
-
-  onSearchTextChange(): void {
-    console.log('Search text changed:', this.searchText);
-    this.updateSearchResults();
-
-    if (this.logGrid?.instance) {
-      this.logGrid.instance.refresh();
-    }
-  }
-
-  clearSearchText(): void {
-    this.searchText = '';
-    this.logGrid.instance.refresh();
-  }
-
-  findNext(): void {
-    if (this.searchResults.length === 0) {
-      console.log('No search results available to navigate.');
-      return;
-    }
-
-    this.currentSearchIndex =
-      (this.currentSearchIndex + 1) % this.searchResults.length;
-
-    console.log('Moving to next result, index:', this.currentSearchIndex);
-    this.scrollToCurrentSearchResult();
-  }
-
-  findPrevious(): void {
-    if (this.searchResults.length === 0) {
-      console.log('No search results available to navigate.');
-      return;
-    }
-
-    this.currentSearchIndex =
-      (this.currentSearchIndex - 1 + this.searchResults.length) %
-      this.searchResults.length;
-
-    console.log('Moving to previous result, index:', this.currentSearchIndex);
-    this.scrollToCurrentSearchResult();
-  }
-
-  scrollToCurrentSearchResult(): void {
-    const currentResult = this.searchResults[this.currentSearchIndex];
-    if (currentResult && this.logGrid?.instance) {
-      this.logGrid.instance.navigateToRow(currentResult.index);
-      this.logGrid.instance.selectRowsByIndexes([currentResult.index]);
-    }
-  }
-
   closeTab(index: number, event?: MouseEvent): void {
     if (event) {
       event.stopPropagation();
     }
+
     this.tabs.splice(index, 1);
 
     if (this.selectedIndex >= this.tabs.length) {
       this.selectedIndex = this.tabs.length - 1;
     }
+
+    if (this.tabs.length === 0) {
+      this.addTab();
+    }
+
     this.cdr.detectChanges();
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = true;
+  }
+
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = false;
+  }
+
+  onDrop(event: DragEvent): void {
+    this.isDragging = false;
+
+    this.DragAndDropService.handleDrop(
+      event,
+      (result) => {
+        this.txtFilesLoaded.emit(result.txtFiles);
+
+        const currentTab = this.tabs[this.selectedIndex];
+        currentTab.isNew = false;
+        currentTab.zipFile = result.txtFiles[0];
+        currentTab.zipContents = result.txtFiles;
+        currentTab.fileLogsMap = result.fileLogsMap;
+        currentTab.logsDataSource = result.logs;
+        this.logsDataSource = result.logs;
+
+        currentTab.title = result.txtFiles[0].name.replace(/\.zip$/, '');
+
+        this.onFileSelectionChange(null);
+      },
+      (error) => {
+        console.error('Error processing files:', error);
+      }
+    );
   }
 }

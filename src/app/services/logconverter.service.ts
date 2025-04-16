@@ -16,7 +16,7 @@ const THEMA_MAPPING: { [key: string]: string[] } = {
   Engine: ['Engine'],
   Drucken: ['print', 'Printer'],
   Einsatzerstellung: ['Generating'],
-  Einsatzabschluss: ['removing silent record!'],
+  Einsatzabschluss: ['removing silent record!', 'NIDA ID in Finish'],
   Nida_Start: ['NIDA started'],
   Benutzer_Reset: ['Neustart durch den Benutzer'],
   Manuell_gelöscht: ['Engine.record_do_action: removing record!'],
@@ -38,7 +38,7 @@ export class LogConverterService {
       /(\d{4}[-.]\d{2}[-.]\d{2}|\d{2}[-.]\d{2}[-.]\d{4})[ \t]+(\d{2}:\d{2}:\d{2})(?:\.\d{1,4})?[ \t]*(\[?(Info|Warn|Error|Fatal|INF|WRN|ERR|FTL)?\]?)?:?[ \t]*(.*)/;
 
     const serilogRegex =
-      /^\[(\d{4}\.\d{2}\.\d{2}) (\d{2}:\d{2}:\d{2}\.\d{3}) ([A-Z]+)\s+([\w\d\.]+)\s*\]? (.*)$/;
+      /^\[(\d{4}\.\d{2}\.\d{2}) (\d{2}:\d{2}:\d{2}\.\d{3}) ([A-Z]+)\s+([\w\d\.\s]+)\s*\]? (.*)$/;
 
     let currentLog: Log | null = null;
 
