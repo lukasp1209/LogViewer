@@ -24,6 +24,7 @@ import {
   DxTabPanelModule,
   DxTabsModule,
   DxTextBoxModule,
+  DxSelectBoxModule,
 } from 'devextreme-angular';
 
 @NgModule({
@@ -49,6 +50,7 @@ import {
     MatButtonModule,
     MatIconModule,
     MatTabsModule,
+    DxSelectBoxModule,
   ],
   providers: [],
   bootstrap: [AppComponent],

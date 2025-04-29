@@ -1,3 +1,5 @@
+<meta charset="UTF-8" />
+
 <div
   *ngIf="tabs.length === 0"
   class="upload-section"
@@ -12,6 +14,7 @@
     (change)="loadFiles($event)"
     accept=".zip"
     class="upload-input"
+    multiple
   />
   <label for="file-upload-main" class="upload-label">
     <p class="upload-text">Datei hier ablegen oder klicken zum Hochladen</p>
@@ -74,20 +77,20 @@
     <div *ngIf="!tab.isNew" style="margin-bottom: 20px">
       <div class="dropdown-section" style="margin-bottom: 20px">
         <label for="dropdownMenuButton" class="form-label"></label>
-        <select
+        <dx-select-box
           id="dropdownMenuButton"
-          class="form-select"
-          [(ngModel)]="tab.selectedFileName"
-          (change)="onFileSelectionChange(tab.selectedFileName)"
+          [dataSource]="tab.zipContents"
+          [displayExpr]="getFileName"
+          valueExpr="name"
+          [(value)]="tab.selectedFileName"
+          (onValueChanged)="onFileSelectionChange($event.value)"
+          placeholder="Bitte auswählen..."
         >
-          <option value="" disabled selected>Bitte auswählen...</option>
-          <option *ngFor="let file of tab.zipContents" [value]="file.name">
-            {{ file.name | slice : file.name.lastIndexOf("/") + 1 }}
-          </option>
-        </select>
+        </dx-select-box>
       </div>
 
       <dx-data-grid
+        #logGRid
         class="dx-datagrid"
         *ngIf="tab.logsDataSource.length > 0"
         [dataSource]="tab.logsDataSource"
@@ -112,7 +115,7 @@
             ></dx-button>
           </dxi-item>
         </dxo-toolbar>
-        <dxo-scrolling mode="virtual"></dxo-scrolling>
+        <dxo-scrolling mode="^virtual"></dxo-scrolling>
         <dxo-group-panel [visible]="true"></dxo-group-panel>
         <dxo-header-filter [visible]="true"></dxo-header-filter>
 
@@ -120,11 +123,26 @@
           dataField="Datum"
           dataType="date"
           format="dd.MM.yyyy"
+          [headerFilter]="{ visible: true }"
           [width]="150"
         >
         </dxi-column>
 
-        <dxi-column dataField="Uhrzeit" [width]="150"> </dxi-column>
+        <dxi-column
+          dataField="Uhrzeit"
+          dataType="string"
+          [headerFilter]="{ visible: true }"
+          [width]="150"
+        >
+        </dxi-column>
+
+        <dxi-column type="buttons" [width]="50">
+          <dxi-button
+            icon="copy"
+            [onClick]="setHeaderFilter"
+            text="Filter setzen"
+          ></dxi-button>
+        </dxi-column>
 
         <dxi-column dataField="Loglevel" dataType="string" [width]="100">
         </dxi-column>
@@ -135,7 +153,6 @@
           [headerFilter]="{ visible: true, width: 600 }"
         >
         </dxi-column>
-
         <dxi-column dataField="Thema" dataType="string" [width]="250">
         </dxi-column>
       </dx-data-grid>
@@ -151,7 +168,6 @@
   </div>
 </div>
 
-<!-- Footer -->
 <footer style="text-align: center; margin-top: 20px">
   <p class="version">Version 1.4</p>
   <p>&copy; 2025 medDV GmbH</p>

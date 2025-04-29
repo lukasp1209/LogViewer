@@ -34,6 +34,23 @@ export class LogConverterService {
     const logLines = logContent.split('\n').map((line) => line.trim());
     const parsedLogs: Log[] = [];
 
+    // Spezielle Behandlung für preferences.txt
+    if (fileName === 'preferences.txt') {
+      for (const line of logLines) {
+        if (line.includes('=')) {
+          const [key, value] = line.split('=');
+          parsedLogs.push({
+            Datum: '',
+            Uhrzeit: '',
+            Loglevel: 'INFO',
+            Nachricht: `${key.trim()} = ${value.trim()}`,
+            Thema: 'Preferences',
+          });
+        }
+      }
+      return parsedLogs;
+    }
+
     const logRegex =
       /(\d{4}[-.]\d{2}[-.]\d{2}|\d{2}[-.]\d{2}[-.]\d{4})[ \t]+(\d{2}:\d{2}:\d{2})(?:\.\d{1,4})?[ \t]*(\[?(Info|Warn|Error|Fatal|INF|WRN|ERR|FTL)?\]?)?:?[ \t]*(.*)/;
 
@@ -46,7 +63,6 @@ export class LogConverterService {
       if (fileName === 'preferences.txt') {
         line = line.replace(/ /g, '\n');
       }
-
       let match = serilogRegex.exec(line);
       let isSerilog = !!match;
 

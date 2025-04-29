@@ -12,6 +12,11 @@ import { DxDataGridComponent } from 'devextreme-angular';
 import { UploadService } from '../services/upload.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { DragAndDropService } from '../services/dragAndDrop.service';
+import * as deMessages from 'devextreme/localization/messages/de.json';
+import { loadMessages, locale } from 'devextreme/localization';
+
+loadMessages(deMessages);
+locale('de');
 
 @Component({
   selector: 'app-body',
@@ -67,9 +72,15 @@ export class BodyComponent {
     protected logConverter: LogConverterService,
     protected uploadService: UploadService,
     protected DragAndDropService: DragAndDropService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private sanitizer: DomSanitizer
   ) {
     this.logsDataSource = logConverter.getLogs();
+    this.setHeaderFilter = this.setHeaderFilter.bind(this);
+  }
+
+  sanitizeText(text: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(text);
   }
 
   ngAfterViewInit(): void {
@@ -109,14 +120,20 @@ export class BodyComponent {
     }
   }
 
+  getFileName(file: File): string {
+    return (
+      file.name.split('/').pop() || file.name.split('\\').pop() || file.name
+    );
+  }
+
   resetGrid(logGrid: DxDataGridComponent): void {
     if (!logGrid || !logGrid.instance) {
-      console.warn('logGrid is not initialized or instance is undefined.');
       return;
     }
 
     logGrid.instance.clearSelection();
     logGrid.instance.clearFilter();
+    logGrid.instance.state({});
   }
 
   onFileSelectionChange(selectedFile: string | null = null): void {
@@ -139,15 +156,6 @@ export class BodyComponent {
       this.logsDataSource = [];
     }
     console.log(`File selection changed to: ${selectedFile}`);
-  }
-
-  applyFilter(column: string, value: string): void {
-    if (this.logGrid?.instance) {
-      this.logGrid.instance.filter([column, '=', value]);
-      console.log(`Filter applied: ${column} = ${value}`);
-    } else {
-      console.warn('logGrid instance is not available.');
-    }
   }
 
   addTab(): void {
@@ -233,5 +241,26 @@ export class BodyComponent {
         console.error('Error processing files:', error);
       }
     );
+  }
+
+  setHeaderFilter(rowData: any): void {
+    if (this.logGrid?.instance && rowData) {
+      const date = rowData.Datum;
+      const time = rowData.Uhrzeit;
+
+      console.log('Row data:', rowData);
+
+      console.log('Setting header filter for date and time:', date, time);
+
+      this.resetGrid(this.logGrid);
+
+      this.logGrid.instance.filter([
+        ['Datum', '=', date],
+        'and',
+        ['Uhrzeit', '=', time],
+      ]);
+
+      console.log('Header filters set successfully.');
+    }
   }
 }
