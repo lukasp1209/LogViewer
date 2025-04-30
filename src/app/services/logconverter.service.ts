@@ -42,9 +42,9 @@ export class LogConverterService {
           parsedLogs.push({
             Datum: '',
             Uhrzeit: '',
-            Loglevel: 'INFO',
+            Loglevel: '',
             Nachricht: `${key.trim()} = ${value.trim()}`,
-            Thema: 'Preferences',
+            Thema: '',
           });
         }
       }

@@ -243,24 +243,39 @@ export class BodyComponent {
     );
   }
 
-  setHeaderFilter(rowData: any): void {
+  setHeaderFilter(event: any): void {
+    const rowData = event.row.data;
+
+    this.logGrid.instance.clearFilter();
+
     if (this.logGrid?.instance && rowData) {
-      const date = rowData.Datum;
-      const time = rowData.Uhrzeit;
+      let date = rowData.Datum;
+      if (typeof date === 'string') {
+        const parts = date.split('.');
+        if (parts.length === 3) {
+          const year = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10) - 1;
+          const day = parseInt(parts[2], 10);
+          date = new Date(year, month, day);
+        }
+      }
 
-      console.log('Row data:', rowData);
+      let time = rowData.Uhrzeit;
+      if (time) {
+        const timeParts = time.split(':');
+        if (timeParts.length >= 2) {
+          time = `${timeParts[0].padStart(2, '0')}:${timeParts[1].padStart(
+            2,
+            '0'
+          )}:`;
+        }
+      }
 
-      console.log('Setting header filter for date and time:', date, time);
-
-      this.resetGrid(this.logGrid);
-
-      this.logGrid.instance.filter([
-        ['Datum', '=', date],
-        'and',
-        ['Uhrzeit', '=', time],
-      ]);
-
-      console.log('Header filters set successfully.');
+      this.logGrid.instance.columnOption('Datum', 'filterValue', date);
+      this.logGrid.instance.columnOption('Uhrzeit', 'filterValue', time);
+      this.logGrid.instance.refresh();
+    } else {
+      console.warn('logGrid instance or rowData is not available.');
     }
   }
 }
