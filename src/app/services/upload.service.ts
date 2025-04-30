@@ -13,6 +13,7 @@ export class UploadService {
   ) {}
 
   maxFileSize = 250;
+  maxFilesInZip = 1000;
 
   async processFiles(fileList: FileList): Promise<{
     txtFiles: File[];
@@ -24,9 +25,8 @@ export class UploadService {
     const logs: Log[] = [];
     const fileLogsMap: { [key: string]: Log[] } = {};
 
-    for (let i = 0; i < fileList.length; i++) {
-      const file = fileList[i];
-      if (file.size > this.maxFileSize * 1024 * 1024) {
+    for (const file of Array.from(fileList)) {
+      if (this.isFileTooLarge(file)) {
         this.notificationService.showWarning(
           `Die Datei "${file.name}" ist zu groß und wird nicht verarbeitet. Maximale Größe: ${this.maxFileSize} MB`
         );
@@ -47,6 +47,10 @@ export class UploadService {
     return { txtFiles, logs, fileLogsMap };
   }
 
+  private isFileTooLarge(file: File): boolean {
+    return file.size > this.maxFileSize * 1024 * 1024;
+  }
+
   private async processZipFile(
     file: File,
     zip: JSZip,
@@ -59,59 +63,68 @@ export class UploadService {
       const zipData = await zip.loadAsync(file);
       const fileNames = Object.keys(zipData.files);
 
-      const maxFiles = 1000;
       let processedFiles = 0;
 
       for (const fileName of fileNames) {
-        if (processedFiles >= maxFiles) {
-          this.notificationService.showWarning(
-            `Dateilimit erreicht: Es werden nur die ersten ${maxFiles} Dateien in "${file.name}" verarbeitet.`
-          );
-          break;
-        }
+        const sanitizedFileName = this.sanitizeFileName(fileName);
+        console.log('Bereinigter Dateiname:', sanitizedFileName);
 
-        console.log('Datei innerhalb der ZIP wird verarbeitet:', fileName);
-
-        if (fileName.endsWith('.txt')) {
-          try {
-            const text = await zipData.files[fileName].async('text');
-            const lines = text.split('\n');
-            const chunkSize = 10000;
-            const parsedLogs: Log[] = [];
-
-            for (let i = 0; i < lines.length; i += chunkSize) {
-              const chunk = lines.slice(i, i + chunkSize).join('\n');
-              const chunkLogs = this.logConverter.parseLogs(chunk, fileName);
-              parsedLogs.push(...chunkLogs);
-            }
-
-            const extractedFile = new File([new Blob([text])], fileName);
-            txtFiles.push(extractedFile);
-
-            logs.push(...parsedLogs);
-            fileLogsMap[fileName] = parsedLogs;
-
-            processedFiles++;
-          } catch (error) {
-            this.notificationService.showError(
-              `Fehler beim Verarbeiten der Datei "${fileName}" innerhalb der ZIP "${
-                file.name
-              }": ${
-                error instanceof Error ? error.message : 'Unbekannter Fehler'
-              }`
+        if (sanitizedFileName.endsWith('.txt')) {
+          if (processedFiles >= this.maxFilesInZip) {
+            this.notificationService.showWarning(
+              `Dateilimit erreicht: Es werden nur die ersten ${this.maxFilesInZip} Dateien in "${file.name}" verarbeitet.`
             );
+            break;
           }
-        } else if (fileName.endsWith('.zip')) {
+
+          await this.processTxtFileInZip(
+            zipData,
+            sanitizedFileName,
+            txtFiles,
+            logs,
+            fileLogsMap
+          );
+          processedFiles++;
+        } else if (sanitizedFileName.endsWith('.zip')) {
           this.notificationService.showWarning(
-            `Verschachtelte ZIP-Dateien werden nicht unterstützt: "${fileName}" innerhalb von "${file.name}".`
+            `Verschachtelte ZIP-Dateien werden nicht unterstützt: "${sanitizedFileName}" innerhalb von "${file.name}".`
           );
         }
       }
     } catch (error) {
-      this.notificationService.showError(
-        `Fehler beim Verarbeiten der ZIP-Datei "${file.name}": ${
-          error instanceof Error ? error.message : 'Unbekannter Fehler'
-        }`
+      this.handleError(
+        `Fehler beim Verarbeiten der ZIP-Datei "${file.name}"`,
+        error
+      );
+    }
+  }
+
+  private sanitizeFileName(fileName: string): string {
+    return fileName.replace(/[^\x20-\x7E]/g, '');
+  }
+
+  private async processTxtFileInZip(
+    zipData: JSZip,
+    fileName: string,
+    txtFiles: File[],
+    logs: Log[],
+    fileLogsMap: { [key: string]: Log[] }
+  ): Promise<void> {
+    try {
+      const text = await zipData.files[fileName].async('text');
+      const utf8Text = this.decodeUtf8(text);
+      console.log('Dekodierter Text:', utf8Text);
+
+      const parsedLogs = this.parseLogsFromText(utf8Text, fileName);
+      const extractedFile = new File([new Blob([utf8Text])], fileName);
+
+      txtFiles.push(extractedFile);
+      logs.push(...parsedLogs);
+      fileLogsMap[fileName] = parsedLogs;
+    } catch (error) {
+      this.handleError(
+        `Fehler beim Verarbeiten der Datei "${fileName}" innerhalb der ZIP`,
+        error
       );
     }
   }
@@ -124,26 +137,40 @@ export class UploadService {
   ): Promise<void> {
     try {
       const text = await this.readFileAsText(file);
+      const parsedLogs = this.parseLogsFromText(text, file.name);
+
       txtFiles.push(file);
-
-      const lines = text.split('\n');
-      const chunkSize = 10000;
-      const parsedLogs: Log[] = [];
-
-      for (let i = 0; i < lines.length; i += chunkSize) {
-        const chunk = lines.slice(i, i + chunkSize).join('\n');
-        const chunkLogs = this.logConverter.parseLogs(chunk, file.name);
-        parsedLogs.push(...chunkLogs);
-      }
-
       logs.push(...parsedLogs);
       fileLogsMap[file.name] = parsedLogs;
     } catch (error) {
-      this.notificationService.showError(
-        `Fehler beim Verarbeiten der TXT-Datei "${file.name}": ${
-          error instanceof Error ? error.message : 'Unbekannter Fehler'
-        }`
+      this.handleError(
+        `Fehler beim Verarbeiten der TXT-Datei "${file.name}"`,
+        error
       );
+    }
+  }
+
+  private parseLogsFromText(text: string, fileName: string): Log[] {
+    const lines = text.split('\n');
+    const chunkSize = 10000;
+    const parsedLogs: Log[] = [];
+
+    for (let i = 0; i < lines.length; i += chunkSize) {
+      const chunk = lines.slice(i, i + chunkSize).join('\n');
+      const chunkLogs = this.logConverter.parseLogs(chunk, fileName);
+      parsedLogs.push(...chunkLogs);
+    }
+
+    return parsedLogs;
+  }
+
+  private decodeUtf8(text: string): string {
+    try {
+      return new TextDecoder('utf-8', { fatal: true }).decode(
+        new TextEncoder().encode(text)
+      );
+    } catch (error) {
+      throw new Error(`Fehler beim Dekodieren als UTF-8: ${error}`);
     }
   }
 
@@ -154,5 +181,11 @@ export class UploadService {
       reader.onerror = (e) => reject(e);
       reader.readAsText(file);
     });
+  }
+
+  private handleError(message: string, error: unknown): void {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unbekannter Fehler';
+    this.notificationService.showError(`${message}: ${errorMessage}`);
   }
 }

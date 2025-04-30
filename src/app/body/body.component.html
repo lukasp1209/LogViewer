@@ -12,12 +12,12 @@
     id="file-upload-main"
     type="file"
     (change)="loadFiles($event)"
-    accept=".zip"
+    accept=".txt,.zip"
     class="upload-input"
     multiple
   />
   <label for="file-upload-main" class="upload-label">
-    <p class="upload-text">Datei hier ablegen oder klicken zum Hochladen</p>
+    <p class="upload-text">Dateien hier ablegen oder klicken zum Hochladen</p>
   </label>
 </div>
 
@@ -67,10 +67,14 @@
         [id]="'file-upload-' + i"
         type="file"
         (change)="loadFiles($event)"
+        accept=".txt,.zip"
         class="upload-input"
+        multiple
       />
       <label [for]="'file-upload-' + i" class="upload-label">
-        <p class="upload-text">Datei hier ablegen oder klicken zum Hochladen</p>
+        <p class="upload-text">
+          Dateien hier ablegen oder klicken zum Hochladen
+        </p>
       </label>
     </div>
 
@@ -169,6 +173,6 @@
 </div>
 
 <footer style="text-align: center; margin-top: 20px">
-  <p class="version">Version 1.5</p>
+  <p class="version">Version 1.6</p>
   <p>&copy; 2025 medDV GmbH</p>
 </footer>

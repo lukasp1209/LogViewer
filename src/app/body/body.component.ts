@@ -106,13 +106,26 @@ export class BodyComponent {
 
       const currentTab = this.tabs[this.selectedIndex];
       currentTab.isNew = false;
-      currentTab.zipFile = fileList[0];
+      currentTab.zipFile = null;
       currentTab.zipContents = txtFiles;
       currentTab.fileLogsMap = fileLogsMap;
       currentTab.logsDataSource = logs;
       this.logsDataSource = logs;
 
-      currentTab.title = fileList[0].name.replace(/\.zip$/, '');
+      if (fileList.length === 1 && fileList[0].name.endsWith('.zip')) {
+        const folderName = fileList[0].name.replace(/\.zip$/, '');
+        currentTab.title = folderName;
+      } else if (txtFiles.length === 1 && txtFiles[0].name.endsWith('.txt')) {
+        currentTab.title = txtFiles[0].name;
+      } else if (txtFiles.length > 1) {
+        const currentDate = new Date();
+        const formattedDate = currentDate.toLocaleDateString('de-DE', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        });
+        currentTab.title = `TXT-Dateien (${formattedDate})`;
+      }
 
       this.onFileSelectionChange(null);
     } catch (error) {
@@ -233,7 +246,26 @@ export class BodyComponent {
         currentTab.logsDataSource = result.logs;
         this.logsDataSource = result.logs;
 
-        currentTab.title = result.txtFiles[0].name.replace(/\.zip$/, '');
+        if (
+          result.txtFiles.length === 1 &&
+          result.txtFiles[0].name.endsWith('.zip')
+        ) {
+          const folderName = result.txtFiles[0].name.replace(/\.zip$/, '');
+          currentTab.title = folderName;
+        } else if (
+          result.txtFiles.length === 1 &&
+          result.txtFiles[0].name.endsWith('.txt')
+        ) {
+          currentTab.title = result.txtFiles[0].name;
+        } else if (result.txtFiles.length > 1) {
+          const currentDate = new Date();
+          const formattedDate = currentDate.toLocaleDateString('de-DE', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+          });
+          currentTab.title = `TXT-Dateien (${formattedDate})`;
+        }
 
         this.onFileSelectionChange(null);
       },
@@ -270,6 +302,9 @@ export class BodyComponent {
           )}:`;
         }
       }
+
+      console.log('Setting header filter for date:', date);
+      console.log('Setting header filter for time:', time);
 
       this.logGrid.instance.columnOption('Datum', 'filterValue', date);
       this.logGrid.instance.columnOption('Uhrzeit', 'filterValue', time);
