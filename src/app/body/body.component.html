@@ -98,7 +98,7 @@
         class="dx-datagrid"
         *ngIf="tab.logsDataSource.length > 0"
         [dataSource]="tab.logsDataSource"
-        [columns]="['Datum', 'Uhrzeit', 'Loglevel', 'Nachricht', 'Thema']"
+        [columns]="['Datum', 'Uhrzeit', 'Loglevel', 'Nachricht', 'Quelle']"
         [allowColumnResizing]="true"
         [columnAutoWidth]="false"
         [width]="'100%'"
@@ -157,7 +157,7 @@
           [headerFilter]="{ visible: true, width: 600 }"
         >
         </dxi-column>
-        <dxi-column dataField="Thema" dataType="string" [width]="250">
+        <dxi-column dataField="Quelle" dataType="string" [width]="250">
         </dxi-column>
       </dx-data-grid>
 

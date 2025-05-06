@@ -1,31 +1,35 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 
 export interface Log {
   Datum: Date;
   Uhrzeit: string;
   Loglevel: string;
   Nachricht: string;
-  Thema: string;
+  Quelle: string;
 }
 
 const logs: Log[] = [];
-
-const THEMA_MAPPING: { [key: string]: string[] } = {
-  Wlan: ['WlanManager', 'WlanStatus'],
-  Bluetooth: ['Bluetooth'],
-  Engine: ['Engine'],
-  Drucken: ['print', 'Printer'],
-  Einsatzerstellung: ['Generating'],
-  Einsatzabschluss: ['removing silent record!', 'NIDA ID in Finish'],
-  Nida_Start: ['NIDA started'],
-  Benutzer_Reset: ['Neustart durch den Benutzer'],
-  Manuell_gelöscht: ['Engine.record_do_action: removing record!'],
-};
 
 @Injectable({
   providedIn: 'root',
 })
 export class LogConverterService {
+  private sourceMapping: { [key: string]: string[] } = {};
+
+  constructor(private http: HttpClient) {
+    this.loadSourceMapping();
+  }
+
+  private loadSourceMapping(): void {
+    this.http
+      .get<{ [key: string]: string[] }>('/assets/source.json')
+      .subscribe({
+        next: (data) => (this.sourceMapping = data),
+        error: (err) => console.error('Failed to load source mapping:', err),
+      });
+  }
+
   getLogs(): Log[] {
     return logs;
   }
@@ -47,7 +51,7 @@ export class LogConverterService {
             Uhrzeit: '',
             Loglevel: '',
             Nachricht: `${key.trim()} = ${value.trim()}`,
-            Thema: '',
+            Quelle: '',
           });
         }
       }
@@ -78,19 +82,19 @@ export class LogConverterService {
           parsedLogs.push(currentLog);
         }
 
-        const [_, date, time, logLevel, rawThema, message] = match;
+        const [_, date, time, logLevel, rawSource, message] = match;
         const cleanedMessage = message?.trim() || '';
         const cleanedLogLevel = logLevel?.replace(/[\[\]]/g, '') || '';
-        const thema = isSerilog
-          ? rawThema
-          : this.determineThema(cleanedLogLevel, cleanedMessage);
+        const source = isSerilog
+          ? rawSource
+          : this.determineSource(cleanedLogLevel, cleanedMessage);
 
         currentLog = {
           Datum: this.formatDateAsDateObj(date, isSerilog),
           Uhrzeit: time.split('.')[0],
           Loglevel: cleanedLogLevel,
           Nachricht: cleanedMessage,
-          Thema: thema,
+          Quelle: source,
         };
       } else if (currentLog) {
         currentLog.Nachricht += ' ' + line;
@@ -101,7 +105,7 @@ export class LogConverterService {
           Uhrzeit: '',
           Loglevel: '',
           Nachricht: cleanedMessage,
-          Thema: '',
+          Quelle: '',
         };
         parsedLogs.push(log);
       }
@@ -114,27 +118,14 @@ export class LogConverterService {
     return parsedLogs;
   }
 
-  formatDate(date: string, isSerilog: boolean = false): string {
-    if (date.includes('-')) {
-      return date.replace(/-/g, '.');
-    }
-    const parts = date.split('.');
-    if (parts.length === 3) {
-      return `${parts[2]}.${parts[1]}.${parts[0]}`;
-    }
-
-    console.warn('Unrecognized date format:', date);
-    return date;
-  }
-
-  determineThema(source: string, message: string): string {
-    for (const [thema, keywords] of Object.entries(THEMA_MAPPING)) {
+  determineSource(source: string, message: string): string {
+    for (const [source, keywords] of Object.entries(this.sourceMapping)) {
       if (
         keywords.some(
           (keyword) => source.includes(keyword) || message.includes(keyword)
         )
       ) {
-        return thema;
+        return source;
       }
     }
     return '';

@@ -90,17 +90,3 @@ footer p {
 .close-tab-button:hover {
   color: #444;
 }
-
-::ng-deep .filter-button {
-  background-color: #e0f7fa;
-  border-radius: 4px;
-  padding: 2px 6px;
-  font-size: 14px;
-  border: 1px solid #0097a7;
-  color: #006064;
-  transition: all 0.2s ease;
-}
-
-::ng-deep .filter-button:hover {
-  background-color: #b2ebf2;
-}

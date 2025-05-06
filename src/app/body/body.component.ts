@@ -303,9 +303,6 @@ export class BodyComponent {
         }
       }
 
-      console.log('Setting header filter for date:', date);
-      console.log('Setting header filter for time:', time);
-
       this.logGrid.instance.columnOption('Datum', 'filterValue', date);
       this.logGrid.instance.columnOption('Uhrzeit', 'filterValue', time);
       this.logGrid.instance.refresh();

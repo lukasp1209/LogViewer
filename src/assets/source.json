@@ -1,0 +1,11 @@
+{
+  "Wlan": ["WlanManager", "WlanStatus"],
+  "Bluetooth": ["Bluetooth"],
+  "Engine": ["Engine"],
+  "Drucken": ["print", "Printer"],
+  "Einsatzerstellung": ["Generating"],
+  "Einsatzabschluss": ["removing silent record!", "NIDA ID in Finish"],
+  "Nida_Start": ["NIDA started"],
+  "Benutzer_Reset": ["Neustart durch den Benutzer"],
+  "Manuell_gelöscht": ["Engine.record_do_action: removing record!"]
+}
