@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 
 export interface Log {
-  Datum: string;
+  Datum: Date;
   Uhrzeit: string;
   Loglevel: string;
   Nachricht: string;
@@ -43,7 +43,7 @@ export class LogConverterService {
         if (line.includes('=')) {
           const [key, value] = line.split('=');
           parsedLogs.push({
-            Datum: '',
+            Datum: new Date(),
             Uhrzeit: '',
             Loglevel: '',
             Nachricht: `${key.trim()} = ${value.trim()}`,
@@ -86,8 +86,8 @@ export class LogConverterService {
           : this.determineThema(cleanedLogLevel, cleanedMessage);
 
         currentLog = {
-          Datum: this.formatDate(date),
-          Uhrzeit: time,
+          Datum: this.formatDateAsDateObj(date, isSerilog),
+          Uhrzeit: time.split('.')[0],
           Loglevel: cleanedLogLevel,
           Nachricht: cleanedMessage,
           Thema: thema,
@@ -97,7 +97,7 @@ export class LogConverterService {
       } else {
         const cleanedMessage = line.trim();
         const log: Log = {
-          Datum: '',
+          Datum: new Date(),
           Uhrzeit: '',
           Loglevel: '',
           Nachricht: cleanedMessage,
@@ -114,12 +114,17 @@ export class LogConverterService {
     return parsedLogs;
   }
 
-  formatDate(date: string): string {
+  formatDate(date: string, isSerilog: boolean = false): string {
     if (date.includes('-')) {
       return date.replace(/-/g, '.');
     }
     const parts = date.split('.');
-    return `${parts[2]}.${parts[1]}.${parts[0]}`;
+    if (parts.length === 3) {
+      return `${parts[2]}.${parts[1]}.${parts[0]}`;
+    }
+
+    console.warn('Unrecognized date format:', date);
+    return date;
   }
 
   determineThema(source: string, message: string): string {
@@ -133,5 +138,20 @@ export class LogConverterService {
       }
     }
     return '';
+  }
+
+  formatDateAsDateObj(date: string, isSerilog: boolean = false): Date {
+    let day, month, year;
+    if (isSerilog) {
+      const [yyyy, MM, dd] = date.split('.');
+      return new Date(parseInt(yyyy), parseInt(MM) - 1, parseInt(dd));
+    } else {
+      if (date.includes('-')) {
+        [year, month, day] = date.split('-');
+      } else {
+        [day, month, year] = date.split('.');
+      }
+      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    }
   }
 }
