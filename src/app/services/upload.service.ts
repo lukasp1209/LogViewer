@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
-import * as JSZip from 'jszip';
+import { unzipSync, strFromU8, Unzipped } from 'fflate';
 import { Log, LogConverterService } from './logconverter.service';
 import { NotificationService } from './notification.service';
+import * as iconv from 'iconv-lite';
+import { Buffer } from 'buffer';
 
 @Injectable({
   providedIn: 'root',
@@ -20,7 +22,6 @@ export class UploadService {
     logs: Log[];
     fileLogsMap: { [key: string]: Log[] };
   }> {
-    const zip = new JSZip();
     const txtFiles: File[] = [];
     const logs: Log[] = [];
     const fileLogsMap: { [key: string]: Log[] } = {};
@@ -34,7 +35,7 @@ export class UploadService {
       }
 
       if (file.name.endsWith('.zip')) {
-        await this.processZipFile(file, zip, txtFiles, logs, fileLogsMap);
+        await this.processZipFile(file, txtFiles, logs, fileLogsMap);
       } else if (file.name.endsWith('.txt')) {
         await this.processTxtFile(file, txtFiles, logs, fileLogsMap);
       } else {
@@ -53,77 +54,46 @@ export class UploadService {
 
   private async processZipFile(
     file: File,
-    zip: JSZip,
     txtFiles: File[],
     logs: Log[],
     fileLogsMap: { [key: string]: Log[] }
   ): Promise<void> {
     try {
       console.log('ZIP-Datei wird verarbeitet:', file.name);
-      const zipData = await zip.loadAsync(file);
-      const fileNames = Object.keys(zipData.files);
+
+      const arrayBuffer = await file.arrayBuffer();
+
+      const unzipped: Unzipped = unzipSync(new Uint8Array(arrayBuffer));
 
       let processedFiles = 0;
 
-      for (const fileName of fileNames) {
-        const sanitizedFileName = this.sanitizeFileName(fileName);
-        console.log('Bereinigter Dateiname:', sanitizedFileName);
+      for (const rawFileName in unzipped) {
+        const fileName = this.decodeFileName(rawFileName);
+        console.log('Dekodierter Dateiname aus ZIP:', fileName);
 
-        if (sanitizedFileName.endsWith('.txt')) {
+        if (fileName.endsWith('.txt')) {
           if (processedFiles >= this.maxFilesInZip) {
             this.notificationService.showWarning(
               `Dateilimit erreicht: Es werden nur die ersten ${this.maxFilesInZip} Dateien in "${file.name}" verarbeitet.`
             );
             break;
           }
+          const fileContent = strFromU8(unzipped[rawFileName]);
+          const parsedLogs = this.parseLogsFromText(fileContent, fileName);
+          const extractedFile = new File([new Blob([fileContent])], fileName);
 
-          await this.processTxtFileInZip(
-            zipData,
-            sanitizedFileName,
-            txtFiles,
-            logs,
-            fileLogsMap
-          );
+          txtFiles.push(extractedFile);
+          logs.push(...parsedLogs);
+          fileLogsMap[fileName] = parsedLogs;
+
           processedFiles++;
-        } else if (sanitizedFileName.endsWith('.zip')) {
-          this.notificationService.showWarning(
-            `Verschachtelte ZIP-Dateien werden nicht unterstützt: "${sanitizedFileName}" innerhalb von "${file.name}".`
-          );
+        } else {
+          console.warn(`Nicht unterstützte Datei im ZIP-Archiv: "${fileName}"`);
         }
       }
     } catch (error) {
       this.handleError(
         `Fehler beim Verarbeiten der ZIP-Datei "${file.name}"`,
-        error
-      );
-    }
-  }
-
-  private sanitizeFileName(fileName: string): string {
-    return fileName.replace(/[^\x20-\x7E]/g, '');
-  }
-
-  private async processTxtFileInZip(
-    zipData: JSZip,
-    fileName: string,
-    txtFiles: File[],
-    logs: Log[],
-    fileLogsMap: { [key: string]: Log[] }
-  ): Promise<void> {
-    try {
-      const text = await zipData.files[fileName].async('text');
-      const utf8Text = this.decodeUtf8(text);
-      console.log('Dekodierter Text:', utf8Text);
-
-      const parsedLogs = this.parseLogsFromText(utf8Text, fileName);
-      const extractedFile = new File([new Blob([utf8Text])], fileName);
-
-      txtFiles.push(extractedFile);
-      logs.push(...parsedLogs);
-      fileLogsMap[fileName] = parsedLogs;
-    } catch (error) {
-      this.handleError(
-        `Fehler beim Verarbeiten der Datei "${fileName}" innerhalb der ZIP`,
         error
       );
     }
@@ -164,16 +134,6 @@ export class UploadService {
     return parsedLogs;
   }
 
-  private decodeUtf8(text: string): string {
-    try {
-      return new TextDecoder('utf-8', { fatal: true }).decode(
-        new TextEncoder().encode(text)
-      );
-    } catch (error) {
-      throw new Error(`Fehler beim Dekodieren als UTF-8: ${error}`);
-    }
-  }
-
   private readFileAsText(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -187,5 +147,13 @@ export class UploadService {
     const errorMessage =
       error instanceof Error ? error.message : 'Unbekannter Fehler';
     this.notificationService.showError(`${message}: ${errorMessage}`);
+  }
+
+  private decodeFileName(rawFileName: string): string {
+    const bytes = new Uint8Array(
+      rawFileName.split('').map((char) => char.charCodeAt(0))
+    );
+
+    return iconv.decode(Buffer.from(bytes), 'cp437');
   }
 }
