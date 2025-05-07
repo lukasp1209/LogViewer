@@ -20,11 +20,11 @@ export class UploadService {
   async processFiles(fileList: FileList): Promise<{
     txtFiles: File[];
     logs: Log[];
-    fileLogsMap: { [key: string]: Log[] };
+    fileLogsMap: Record<string, Log[]>;
   }> {
     const txtFiles: File[] = [];
     const logs: Log[] = [];
-    const fileLogsMap: { [key: string]: Log[] } = {};
+    const fileLogsMap: Record<string, Log[]> = {};
 
     for (const file of Array.from(fileList)) {
       if (this.isFileTooLarge(file)) {
@@ -56,20 +56,17 @@ export class UploadService {
     file: File,
     txtFiles: File[],
     logs: Log[],
-    fileLogsMap: { [key: string]: Log[] }
+    fileLogsMap: Record<string, Log[]>
   ): Promise<void> {
     try {
-      console.log('ZIP-Datei wird verarbeitet:', file.name);
-
       const arrayBuffer = await file.arrayBuffer();
-
+      const isUtf8 = this.hasUtf8Flag(arrayBuffer);
       const unzipped: Unzipped = unzipSync(new Uint8Array(arrayBuffer));
 
       let processedFiles = 0;
 
       for (const rawFileName in unzipped) {
-        const fileName = this.decodeFileName(rawFileName);
-        console.log('Dekodierter Dateiname aus ZIP:', fileName);
+        const fileName = this.decodeFileName(rawFileName, isUtf8);
 
         if (fileName.endsWith('.txt')) {
           if (processedFiles >= this.maxFilesInZip) {
@@ -78,6 +75,7 @@ export class UploadService {
             );
             break;
           }
+
           const fileContent = strFromU8(unzipped[rawFileName]);
           const parsedLogs = this.parseLogsFromText(fileContent, fileName);
           const extractedFile = new File([new Blob([fileContent])], fileName);
@@ -87,8 +85,6 @@ export class UploadService {
           fileLogsMap[fileName] = parsedLogs;
 
           processedFiles++;
-        } else {
-          console.warn(`Nicht unterstützte Datei im ZIP-Archiv: "${fileName}"`);
         }
       }
     } catch (error) {
@@ -103,7 +99,7 @@ export class UploadService {
     file: File,
     txtFiles: File[],
     logs: Log[],
-    fileLogsMap: { [key: string]: Log[] }
+    fileLogsMap: Record<string, Log[]>
   ): Promise<void> {
     try {
       const text = await this.readFileAsText(file);
@@ -149,11 +145,27 @@ export class UploadService {
     this.notificationService.showError(`${message}: ${errorMessage}`);
   }
 
-  private decodeFileName(rawFileName: string): string {
-    const bytes = new Uint8Array(
-      rawFileName.split('').map((char) => char.charCodeAt(0))
-    );
+  private hasUtf8Flag(zipBuffer: ArrayBuffer): boolean {
+    const dataView = new DataView(zipBuffer);
+    const signature = dataView.getUint32(0, true);
+    if (signature !== 0x04034b50) return false;
 
-    return iconv.decode(Buffer.from(bytes), 'cp437');
+    const generalPurposeBitFlag = dataView.getUint16(6, true);
+    return (generalPurposeBitFlag & 0x0800) !== 0;
+  }
+
+  private decodeFileName(rawFileName: string, isUtf8: boolean): string {
+    try {
+      if (isUtf8) {
+        return rawFileName;
+      } else {
+        const byteArray = new Uint8Array(
+          [...rawFileName].map((c) => c.charCodeAt(0))
+        );
+        return iconv.decode(Buffer.from(byteArray), 'cp437');
+      }
+    } catch (error) {
+      return rawFileName;
+    }
   }
 }

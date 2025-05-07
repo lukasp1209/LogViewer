@@ -18,6 +18,18 @@ import { loadMessages, locale } from 'devextreme/localization';
 loadMessages(deMessages);
 locale('de');
 
+interface RowDataEvent {
+  row: {
+    data: Log;
+  };
+}
+
+interface LogRow {
+  Datum: string | Date;
+  Uhrzeit: string;
+  [key: string]: unknown;
+}
+
 @Component({
   selector: 'app-body',
   templateUrl: './body.component.html',
@@ -36,20 +48,20 @@ export class BodyComponent {
   hoveredTabIndex: number | null = null;
   hoveredRowIndex: number | null = null;
   zipFile: File | null = null;
-  zipContents: Array<File> = [];
-  selectedFileName: string = '';
-  fileLogsMap: { [key: string]: Log[] } = {};
+  zipContents: File[] = [];
+  selectedFileName = '';
+  fileLogsMap: Record<string, Log[]> = {};
   isDragging = false;
   selectedIndex = 0;
-  showUploadForm: boolean = true;
-  fileUploaded: boolean = false;
+  showUploadForm = true;
+  fileUploaded = false;
   tabs: {
     title: string;
     isNew: boolean;
     zipFile: File | null;
     zipContents: File[];
     selectedFileName: string;
-    fileLogsMap: { [key: string]: Log[] };
+    fileLogsMap: Record<string, Log[]>;
     logsDataSource: Log[];
   }[] = [
     {
@@ -62,9 +74,9 @@ export class BodyComponent {
       logsDataSource: [],
     },
   ];
-  searchText: string = '';
-  selectedRowKeys: any[] = [];
-  currentIndex: number = -1;
+  searchText = '';
+  selectedRowKeys: string[] = [];
+  currentIndex = -1;
   highlightedLogs: string[] = [];
 
   constructor(
@@ -83,21 +95,15 @@ export class BodyComponent {
     return this.sanitizer.bypassSecurityTrustHtml(text);
   }
 
-  ngAfterViewInit(): void {
-    if (!this.logGrid) {
-      console.error('logGrid is not initialized.');
-    } else {
-      console.log('logGrid initialized successfully.');
-    }
-  }
-
-  onSelectionChanged(e: any): void {
+  onSelectionChanged(e: { selectedRowKeys: string[] }): void {
     this.selectedRowKeys = e.selectedRowKeys;
   }
 
-  async loadFiles(event: any): Promise<void> {
-    const fileList: FileList = event.target.files;
-    if (fileList.length === 0) return;
+  async loadFiles(event: Event): Promise<void> {
+    const inputElement = event.target as HTMLInputElement;
+    if (!inputElement.files || inputElement.files.length === 0) return;
+
+    const fileList: FileList = inputElement.files;
 
     try {
       const { txtFiles, logs, fileLogsMap } =
@@ -112,25 +118,30 @@ export class BodyComponent {
       currentTab.logsDataSource = logs;
       this.logsDataSource = logs;
 
-      if (fileList.length === 1 && fileList[0].name.endsWith('.zip')) {
-        const folderName = fileList[0].name.replace(/\.zip$/, '');
-        currentTab.title = folderName;
-      } else if (txtFiles.length === 1 && txtFiles[0].name.endsWith('.txt')) {
-        currentTab.title = txtFiles[0].name;
+      if (fileList.length === 1) {
+        const file = fileList[0];
+        if (file.name.endsWith('.zip')) {
+          currentTab.title = file.name.replace(/\.zip$/, '');
+        } else if (file.name.endsWith('.txt')) {
+          currentTab.title = file.name;
+        }
       } else if (txtFiles.length > 1) {
-        const currentDate = new Date();
-        const formattedDate = currentDate.toLocaleDateString('de-DE', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-        });
-        currentTab.title = `TXT-Dateien (${formattedDate})`;
+        currentTab.title = `TXT-Dateien (${this.getFormattedDate()})`;
       }
 
       this.onFileSelectionChange(null);
-    } catch (error) {
-      console.error('Error processing files:', error);
+    } finally {
+      inputElement.value = '';
     }
+  }
+
+  private getFormattedDate(): string {
+    const currentDate = new Date();
+    return currentDate.toLocaleDateString('de-DE', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
   }
 
   getFileName(file: File): string {
@@ -168,26 +179,24 @@ export class BodyComponent {
       currentTab.logsDataSource = [];
       this.logsDataSource = [];
     }
-    console.log(`File selection changed to: ${selectedFile}`);
   }
 
   addTab(): void {
-    let baseTitle = 'Neuer Tab';
-    let newTitle = baseTitle;
-    let counter = 1;
+    const baseTitle = 'Neuer Tab';
 
     const maxTabs = 7;
     if (this.tabs.length >= maxTabs) {
+      const userConfirmed = window.confirm(
+        'Der erste Tab wird gelöscht, um Platz für einen neuen Tab zu schaffen. Möchten Sie fortfahren?'
+      );
+      if (!userConfirmed) {
+        return;
+      }
       this.tabs.shift();
     }
 
-    while (this.tabs.some((tab) => tab.title === newTitle)) {
-      newTitle = `${baseTitle} ${counter}`;
-      counter++;
-    }
-
     this.tabs.push({
-      title: newTitle,
+      title: baseTitle,
       isNew: true,
       zipFile: null,
       zipContents: [],
@@ -233,50 +242,44 @@ export class BodyComponent {
   onDrop(event: DragEvent): void {
     this.isDragging = false;
 
-    this.DragAndDropService.handleDrop(
-      event,
-      (result) => {
-        this.txtFilesLoaded.emit(result.txtFiles);
+    this.DragAndDropService.handleDrop(event, (result) => {
+      this.txtFilesLoaded.emit(result.txtFiles);
 
-        const currentTab = this.tabs[this.selectedIndex];
-        currentTab.isNew = false;
-        currentTab.zipFile = result.txtFiles[0];
-        currentTab.zipContents = result.txtFiles;
-        currentTab.fileLogsMap = result.fileLogsMap;
-        currentTab.logsDataSource = result.logs;
-        this.logsDataSource = result.logs;
+      const currentTab = this.tabs[this.selectedIndex];
+      currentTab.isNew = false;
+      currentTab.zipFile = result.txtFiles[0];
+      currentTab.zipContents = result.txtFiles;
+      currentTab.fileLogsMap = result.fileLogsMap;
+      currentTab.logsDataSource = result.logs;
+      this.logsDataSource = result.logs;
 
-        if (
-          result.txtFiles.length === 1 &&
-          result.txtFiles[0].name.endsWith('.zip')
-        ) {
-          const folderName = result.txtFiles[0].name.replace(/\.zip$/, '');
-          currentTab.title = folderName;
-        } else if (
-          result.txtFiles.length === 1 &&
-          result.txtFiles[0].name.endsWith('.txt')
-        ) {
-          currentTab.title = result.txtFiles[0].name;
-        } else if (result.txtFiles.length > 1) {
-          const currentDate = new Date();
-          const formattedDate = currentDate.toLocaleDateString('de-DE', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-          });
-          currentTab.title = `TXT-Dateien (${formattedDate})`;
-        }
-
-        this.onFileSelectionChange(null);
-      },
-      (error) => {
-        console.error('Error processing files:', error);
+      if (
+        result.txtFiles.length === 1 &&
+        result.txtFiles[0].name.endsWith('.zip')
+      ) {
+        const folderName = result.txtFiles[0].name.replace(/\.zip$/, '');
+        currentTab.title = folderName;
+      } else if (
+        result.txtFiles.length === 1 &&
+        result.txtFiles[0].name.endsWith('.txt')
+      ) {
+        currentTab.title = result.txtFiles[0].name;
+      } else if (result.txtFiles.length > 1) {
+        const currentDate = new Date();
+        const formattedDate = currentDate.toLocaleDateString('de-DE', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        });
+        currentTab.title = `TXT-Dateien (${formattedDate})`;
       }
-    );
+
+      this.onFileSelectionChange(null);
+    });
   }
 
-  setHeaderFilter(event: any): void {
-    const rowData = event.row.data;
+  setHeaderFilter(event: RowDataEvent): void {
+    const rowData = event.row.data as unknown as LogRow;
 
     this.logGrid.instance.clearFilter();
 
@@ -293,7 +296,7 @@ export class BodyComponent {
       }
 
       let time = rowData.Uhrzeit;
-      if (time) {
+      if (time && typeof time === 'string') {
         const timeParts = time.split(':');
         if (timeParts.length >= 2) {
           time = `${timeParts[0].padStart(2, '0')}:${timeParts[1].padStart(
@@ -306,8 +309,6 @@ export class BodyComponent {
       this.logGrid.instance.columnOption('Datum', 'filterValue', date);
       this.logGrid.instance.columnOption('Uhrzeit', 'filterValue', time);
       this.logGrid.instance.refresh();
-    } else {
-      console.warn('logGrid instance or rowData is not available.');
     }
   }
 }

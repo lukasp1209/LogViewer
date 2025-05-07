@@ -15,19 +15,16 @@ const logs: Log[] = [];
   providedIn: 'root',
 })
 export class LogConverterService {
-  private sourceMapping: { [key: string]: string[] } = {};
+  private sourceMapping: Record<string, string[]> = {};
 
   constructor(private http: HttpClient) {
     this.loadSourceMapping();
   }
 
   private loadSourceMapping(): void {
-    this.http
-      .get<{ [key: string]: string[] }>('/assets/source.json')
-      .subscribe({
-        next: (data) => (this.sourceMapping = data),
-        error: (err) => console.error('Failed to load source mapping:', err),
-      });
+    this.http.get<Record<string, string[]>>('/assets/source.json').subscribe({
+      next: (data) => (this.sourceMapping = data),
+    });
   }
 
   getLogs(): Log[] {
@@ -62,7 +59,7 @@ export class LogConverterService {
       /(\d{4}[-.]\d{2}[-.]\d{2}|\d{2}[-.]\d{2}[-.]\d{4})[ \t]+(\d{2}:\d{2}:\d{2})(?:\.\d{1,4})?[ \t]*(\[?(Info|Warn|Error|Fatal|INF|WRN|ERR|FTL)?\]?)?:?[ \t]*(.*)/;
 
     const serilogRegex =
-      /^\[(\d{4}\.\d{2}\.\d{2}) (\d{2}:\d{2}:\d{2})\.\d{3} ([A-Z]+)\s+([\w\d\.\s]+)\s*\]? (.*)$/;
+      /^\[(\d{4}\.\d{2}\.\d{2}) (\d{2}:\d{2}:\d{2})\.\d{3} ([A-Z]+)\s+([\w\d.\s]+)\s*\]? (.*)$/;
 
     let currentLog: Log | null = null;
 
@@ -71,7 +68,7 @@ export class LogConverterService {
         line = line.replace(/ /g, '\n');
       }
       let match = serilogRegex.exec(line);
-      let isSerilog = !!match;
+      const isSerilog = !!match;
 
       if (!isSerilog) {
         match = logRegex.exec(line);
@@ -82,9 +79,9 @@ export class LogConverterService {
           parsedLogs.push(currentLog);
         }
 
-        const [_, date, time, logLevel, rawSource, message] = match;
+        const [, date, time, logLevel, rawSource, message] = match;
         const cleanedMessage = message?.trim() || '';
-        const cleanedLogLevel = logLevel?.replace(/[\[\]]/g, '') || '';
+        const cleanedLogLevel = logLevel?.replace(/[[\]]/g, '') || '';
         const source = isSerilog
           ? rawSource
           : this.determineSource(cleanedLogLevel, cleanedMessage);
@@ -131,7 +128,7 @@ export class LogConverterService {
     return '';
   }
 
-  formatDateAsDateObj(date: string, isSerilog: boolean = false): Date {
+  formatDateAsDateObj(date: string, isSerilog = false): Date {
     let day, month, year;
     if (isSerilog) {
       const [yyyy, MM, dd] = date.split('.');

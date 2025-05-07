@@ -13,9 +13,8 @@ export class DragAndDropService {
     onSuccess: (result: {
       txtFiles: File[];
       logs: Log[];
-      fileLogsMap: { [key: string]: Log[] };
-    }) => void,
-    onError: (error: any) => void
+      fileLogsMap: Record<string, Log[]>;
+    }) => void
   ): Promise<void> {
     event.preventDefault();
     event.stopPropagation();
@@ -23,12 +22,8 @@ export class DragAndDropService {
     if (event.dataTransfer?.files.length) {
       const fileList = event.dataTransfer.files;
 
-      try {
-        const result = await this.uploadService.processFiles(fileList);
-        onSuccess(result);
-      } catch (error) {
-        onError(error);
-      }
+      const result = await this.uploadService.processFiles(fileList);
+      onSuccess(result);
     }
   }
 }

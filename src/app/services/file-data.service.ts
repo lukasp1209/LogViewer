@@ -4,13 +4,13 @@ import { Injectable } from '@angular/core';
   providedIn: 'root',
 })
 export class FileDataService {
-  fileContentMap: { [fileName: string]: string } = {};
-  originalFileContentMap: { [fileName: string]: string } = {};
-  hiddenLinesMap: { [fileName: string]: string[] } = {};
-  dropdownList: any[] = [];
-  selectedItems: any[] = [];
+  fileContentMap: Record<string, string> = {};
+  originalFileContentMap: Record<string, string> = {};
+  hiddenLinesMap: Record<string, string[]> = {};
+  dropdownList: string[] = [];
+  selectedItems: string[] = [];
 
-  markDropdownList: any[] = [];
-  markSelectedItems: any[] = [];
-  selectedTopics: any;
+  markDropdownList: string[] = [];
+  markSelectedItems: string[] = [];
+  selectedTopics: string[] = [];
 }

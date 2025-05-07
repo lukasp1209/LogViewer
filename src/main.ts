@@ -9,6 +9,4 @@ import { licenseKey } from './devextreme-license';
 
 config({ licenseKey });
 
-platformBrowserDynamic()
-  .bootstrapModule(AppModule)
-  .catch((err) => console.error(err));
+platformBrowserDynamic().bootstrapModule(AppModule);
