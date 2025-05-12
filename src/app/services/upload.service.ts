@@ -164,7 +164,7 @@ export class UploadService {
         );
         return iconv.decode(Buffer.from(byteArray), 'cp437');
       }
-    } catch (error) {
+    } catch {
       return rawFileName;
     }
   }

@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 
 export interface Log {
   Datum: Date;
@@ -11,22 +10,22 @@ export interface Log {
 
 const logs: Log[] = [];
 
+const THEMA_MAPPING: { [key: string]: string[] } = {
+  Wlan: ['WlanManager', 'WlanStatus'],
+  Bluetooth: ['Bluetooth'],
+  Engine: ['Engine'],
+  Drucken: ['print', 'Printer'],
+  Einsatzerstellung: ['Generating'],
+  Einsatzabschluss: ['removing silent record!', 'NIDA ID in Finish'],
+  Nida_Start: ['NIDA started'],
+  Benutzer_Reset: ['Neustart durch den Benutzer'],
+  Manuell_gelöscht: ['Engine.record_do_action: removing record!'],
+};
+
 @Injectable({
   providedIn: 'root',
 })
 export class LogConverterService {
-  private sourceMapping: Record<string, string[]> = {};
-
-  constructor(private http: HttpClient) {
-    this.loadSourceMapping();
-  }
-
-  private loadSourceMapping(): void {
-    this.http.get<Record<string, string[]>>('/assets/source.json').subscribe({
-      next: (data) => (this.sourceMapping = data),
-    });
-  }
-
   getLogs(): Log[] {
     return logs;
   }
@@ -79,7 +78,7 @@ export class LogConverterService {
           parsedLogs.push(currentLog);
         }
 
-        const [, date, time, logLevel, rawSource, message] = match;
+        const [date, time, logLevel, rawSource, message] = match;
         const cleanedMessage = message?.trim() || '';
         const cleanedLogLevel = logLevel?.replace(/[[\]]/g, '') || '';
         const source = isSerilog
@@ -115,13 +114,21 @@ export class LogConverterService {
     return parsedLogs;
   }
 
-  determineSource(source: string, message: string): string {
-    for (const [source, keywords] of Object.entries(this.sourceMapping)) {
-      if (
-        keywords.some(
-          (keyword) => source.includes(keyword) || message.includes(keyword)
-        )
-      ) {
+  formatDate(date: string): string {
+    if (date.includes('-')) {
+      return date.replace(/-/g, '.');
+    }
+    const parts = date.split('.');
+    if (parts.length === 3) {
+      return `${parts[2]}.${parts[1]}.${parts[0]}`;
+    }
+
+    return date;
+  }
+
+  determineSource(logLevel: string, message: string): string {
+    for (const [source, keywords] of Object.entries(THEMA_MAPPING)) {
+      if (keywords.some((keyword) => message.includes(keyword))) {
         return source;
       }
     }
