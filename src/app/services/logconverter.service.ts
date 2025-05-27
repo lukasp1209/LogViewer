@@ -135,6 +135,7 @@ export class LogConverterService {
     }
     return '';
   }
+
   formatDateAsDateObj(date: string, isSerilog = false): Date {
     let day, month, year;
     if (isSerilog) {
