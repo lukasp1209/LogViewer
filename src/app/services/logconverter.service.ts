@@ -137,17 +137,23 @@ export class LogConverterService {
   }
 
   formatDateAsDateObj(date: string, isSerilog = false): Date {
-    let day, month, year;
     if (isSerilog) {
       const [yyyy, MM, dd] = date.split('.');
       return new Date(parseInt(yyyy), parseInt(MM) - 1, parseInt(dd));
-    } else {
-      if (date.includes('-')) {
-        [year, month, day] = date.split('-');
+    }
+
+    if (date.includes('-')) {
+      const parts = date.split('-');
+      if (parseInt(parts[0]) > 31) {
+        const [yyyy, MM, dd] = parts;
+        return new Date(parseInt(yyyy), parseInt(MM) - 1, parseInt(dd));
       } else {
-        [day, month, year] = date.split('.');
+        const [dd, MM, yyyy] = parts;
+        return new Date(parseInt(yyyy), parseInt(MM) - 1, parseInt(dd));
       }
-      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    } else {
+      const [dd, MM, yyyy] = date.split('.');
+      return new Date(parseInt(yyyy), parseInt(MM) - 1, parseInt(dd));
     }
   }
 }

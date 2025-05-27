@@ -58,7 +58,7 @@ describe('BodyComponent', () => {
     } as any;
 
     await component.loadFiles(mockEvent);
-    expect(component.logsDataSource.length).toBeGreaterThan(0);
+    expect(component.logsDataSource.length).greaterThan(0);
     expect(component.tabs[component.selectedIndex].title).toBe('test.txt');
   });
 
