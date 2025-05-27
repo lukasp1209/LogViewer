@@ -44,7 +44,7 @@ export class LogConverterService {
         if (line.includes('=')) {
           const [key, value] = line.split('=');
           parsedLogs.push({
-            Datum: new Date(),
+            Datum: undefined as unknown as Date,
             Uhrzeit: '',
             Loglevel: '',
             Nachricht: `${key.trim()} = ${value.trim()}`,
@@ -98,7 +98,7 @@ export class LogConverterService {
       } else {
         const cleanedMessage = line.trim();
         const log: Log = {
-          Datum: new Date(),
+          Datum: undefined as unknown as Date,
           Uhrzeit: '',
           Loglevel: '',
           Nachricht: cleanedMessage,

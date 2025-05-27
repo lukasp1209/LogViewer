@@ -6,7 +6,7 @@ import {
   ViewChild,
   ChangeDetectorRef,
 } from '@angular/core';
-import { FileDataService } from 'src/app/services/file-data.service';
+import { FileDataService } from '../services/file-data.service';
 import { Log, LogConverterService } from '../services/logconverter.service';
 import { DxDataGridComponent } from 'devextreme-angular';
 import { UploadService } from '../services/upload.service';
@@ -63,7 +63,6 @@ interface LogRow {
   ],
 })
 export class BodyComponent {
-  show = true;
   @Output() txtFilesLoaded = new EventEmitter<File[]>();
   @ViewChild('markedContentElement') markedContentElement:
     | ElementRef

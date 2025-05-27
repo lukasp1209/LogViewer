@@ -28,6 +28,7 @@ devextreme-license.ts
 !.vscode/launch.json
 !.vscode/extensions.json
 .history/*
+/.vscode
 
 # Miscellaneous
 /.angular/cache
@@ -41,4 +42,20 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+# Environment files
 src/devextreme-license.ts
+
+# Cypress
+/cypress
+cypress.config.ts
+
+devextreme-license.ts
+
+
+
+
+.nx/cache
+.nx/workspace-data
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md
