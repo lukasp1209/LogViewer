@@ -1,12 +1,10 @@
-/// <reference types="@angular/localize" />
+// main.ts
+import { bootstrapApplication } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
+import { routes } from './app/routes';
+import { AppComponent } from './app/app.component';
+import { provideHttpClient } from '@angular/common/http';
 
-import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
-
-import { AppModule } from './app/app.module';
-
-import config from 'devextreme/core/config';
-import { licenseKey } from './devextreme-license';
-
-config({ licenseKey });
-
-platformBrowserDynamic().bootstrapModule(AppModule);
+bootstrapApplication(AppComponent, {
+  providers: [provideRouter(routes), provideHttpClient()],
+});

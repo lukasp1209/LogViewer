@@ -14,6 +14,19 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { DragAndDropService } from '../services/dragAndDrop.service';
 import * as deMessages from 'devextreme/localization/messages/de.json';
 import { loadMessages, locale } from 'devextreme/localization';
+import {
+  DxDataGridModule,
+  DxTemplateModule,
+  DxButtonModule,
+  DxTabPanelModule,
+  DxTabsModule,
+  DxTextBoxModule,
+  DxSelectBoxModule,
+} from 'devextreme-angular';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { CommonModule } from '@angular/common';
 
 loadMessages(deMessages);
 locale('de');
@@ -32,10 +45,25 @@ interface LogRow {
 
 @Component({
   selector: 'app-body',
+  standalone: true,
   templateUrl: './body.component.html',
   styleUrls: ['./body.component.scss'],
+  imports: [
+    CommonModule,
+    DxDataGridModule,
+    DxTemplateModule,
+    DxButtonModule,
+    DxTabPanelModule,
+    DxTabsModule,
+    DxTextBoxModule,
+    DxSelectBoxModule,
+    MatTabsModule,
+    MatIconModule,
+    MatButtonModule,
+  ],
 })
 export class BodyComponent {
+  show = true;
   @Output() txtFilesLoaded = new EventEmitter<File[]>();
   @ViewChild('markedContentElement') markedContentElement:
     | ElementRef
