@@ -1,19 +1,19 @@
 @use 'bootstrap/scss/bootstrap' as *;
 
-$webViewer-primary: #000000;
-$webViewer-accent: #ff4081;
-$webViewer-warn: #f44336;
+$logViewer-primary: #000000;
+$logViewer-accent: #ff4081;
+$logViewer-warn: #f44336;
 
-$webViewer-theme: (
-  color: (primary: $webViewer-primary,
-    accent: $webViewer-accent,
-    warn: $webViewer-warn,
+$logViewer-theme: (
+  color: (primary: $logViewer-primary,
+    accent: $logViewer-accent,
+    warn: $logViewer-warn,
   )
 );
 
 body {
   background-color: white;
-  color: $webViewer-primary;
+  color: $logViewer-primary;
   overflow-y: hidden;
   margin-left: 10px !important;
   margin-right: 10px !important;
